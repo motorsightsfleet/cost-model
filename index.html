@@ -909,7 +909,7 @@
             updateMonitoringTable();
         }
 
-      function updateMonitoringTable() {
+   function updateMonitoringTable() {
     const year = parseInt(document.getElementById('yearToMonitor').value);
     const weeks = Array.from({ length: 52 }, (_, i) => `W${i + 1}`);
 
@@ -917,7 +917,7 @@
         { label: 'Service Berkala/PM', sub: [], note: true },
         { label: 'Service General/GM', sub: [], note: true },
         { label: 'BBM', sub: ['Fuel Consumption', 'Fuel Price'], note: false },
-        { label: 'AdBlue', sub: ['AdBlue Consumption', 'AdBlue Price'], note: true },
+        { label: 'AdBlue', sub: ['AdBlue Consumption', 'AdBlue Price'], note: false },
         { label: 'Driver Cost', sub: ['Driver Per Units', 'Driver Cost'], note: false },
         { label: 'Ban', sub: ['Tire Price', 'Tyre per Units'], note: false },
         { label: 'Downtime (1%)', sub: ['Downtime percentage assumption'], note: false }
@@ -939,8 +939,8 @@
             const id = `${component.label.replace(/ /g, '_').replace(/[()]/g, '')}_${year}_${week}`;
             tableHTML += `
                 <td>
-                    ${component.sub.length > 0 ? '' : `<input type=\"text\" id=\"${id}\" oninput=\"formatInputWithSeparator(this)\" placeholder=\"0.00\">`}
-                    ${component.note ? `<span class=\"note-cell\" onclick=\"showNote('${id}')\">Note</span>` : ''}
+                    ${component.sub.length > 0 ? '' : `<input type="text" id="${id}" oninput="formatInputWithSeparator(this)" placeholder="0.00">`}
+                    ${(component.sub.length === 0 && component.note) ? `<span class="note-cell" onclick="showNote('${id}')">Note</span>` : ''}
                 </td>
             `;
         });
@@ -948,13 +948,13 @@
 
         component.sub.forEach(sub => {
             tableHTML += '<tr>';
-            tableHTML += `<td class=\"subcategory\">${sub}</td>`;
+            tableHTML += `<td class="subcategory">${sub}</td>`;
             weeks.forEach(week => {
                 const id = `${component.label.replace(/ /g, '_').replace(/[()]/g, '')}_${sub.replace(/ /g, '_')}_${year}_${week}`;
                 tableHTML += `
                     <td>
-                        <input type=\"text\" id=\"${id}\" oninput=\"formatInputWithSeparator(this)\" placeholder=\"0.00\">
-                        <span class=\"note-cell\" onclick=\"showNote('${id}')\">Note</span>
+                        <input type="text" id="${id}" oninput="formatInputWithSeparator(this)" placeholder="0.00">
+                        <span class="note-cell" onclick="showNote('${id}')">Note</span>
                     </td>
                 `;
             });
@@ -990,5 +990,6 @@
             updateMonitoringTable();
         };
     </script>
+    
 </body>
 </html>
