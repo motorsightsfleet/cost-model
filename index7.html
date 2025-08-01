@@ -1,0 +1,1147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cost Model Calculator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            color: #333;
+            line-height: 1.6;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            border: 1px solid #e0e0e0;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #007bff;
+        }
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            background: #f8f9fa;
+            margin-right: 5px;
+            border-radius: 8px 8px 0 0;
+            font-weight: 500;
+            color: #555;
+            transition: all 0.3s ease;
+        }
+        .tab.active {
+            background: #007bff;
+            color: #fff;
+            border-bottom: 2px solid #0056b3;
+        }
+        .tab-content {
+            display: none;
+            padding: 20px 0;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            display: block;
+            font-size: 14px;
+            font-weight: 600;
+            color: #444;
+            margin-bottom: 8px;
+        }
+        input, select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #ced4da;
+            border-radius: 6px;
+            font-size: 14px;
+            color: #495057;
+            background-color: #fff;
+            transition: border-color 0.3s ease;
+        }
+        input:focus, select:focus {
+            border-color: #007bff;
+            outline: none;
+            box-shadow: 0 0 5px rgba(0, 123, 255, 0.3);
+        }
+        button {
+            padding: 12px 24px;
+            background: #007bff;
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 500;
+            transition: background 0.3s ease, transform 0.2s ease;
+        }
+        button:hover {
+            background: #0056b3;
+            transform: translateY(-2px);
+        }
+        .results {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #e0e0e0;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-around;
+        }
+        .result-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid #ddd;
+            width: 30%;
+            margin-bottom: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+        .result-card h4 {
+            margin-top: 0;
+            color: #333;
+            font-size: 16px;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        .result-card p {
+            margin: 8px 0;
+            font-size: 14px;
+            color: #555;
+        }
+        .maintenance-inputs {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+        }
+        .dashboard-table-container {
+            overflow-x: auto;
+            max-width: 100%;
+            margin-top: 20px;
+        }
+        .dashboard-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 800px;
+            background: #fff;
+        }
+        .dashboard-table th, .dashboard-table td {
+            border: 1px solid #dee2e6;
+            padding: 12px 15px;
+            text-align: right;
+            white-space: nowrap;
+            font-size: 14px;
+        }
+        .dashboard-table th {
+            background-color: #007bff;
+            color: #fff;
+            font-weight: 600;
+            text-align: center;
+        }
+        .dashboard-table td:first-child {
+            text-align: left;
+            font-weight: 500;
+            color: #333;
+        }
+        .dashboard-table .assumption {
+            background-color: #ffeb3b;
+            font-weight: 600;
+            color: #2c3e50;
+        }
+        .dashboard-table tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        .dashboard-table .category {
+            background-color: #28a745 !important;
+            font-weight: 600;
+            color: #fff;
+        }
+        .dashboard-table .category td:not(:first-child) {
+            text-align: center;
+        }
+        .dashboard-table .total-row {
+            background-color: #d1e7ff !important;
+            font-weight: 600;
+        }
+        .dashboard-table .total-per-year {
+            background-color: #e0f7fa !important;
+            font-weight: 600;
+        }
+        .dashboard-table .grand-total {
+            background-color: #0056b3 !important;
+            color: #fff !important;
+            font-weight: 600;
+        }
+        .section {
+            margin-bottom: 20px;
+            padding: 15px;
+            border-radius: 8px;
+            margin-right: 10px;
+        }
+        .section.actual {
+            background-color: #e6f3ff;
+        }
+        .section.assumption {
+            background-color: #f9ebeb;
+        }
+        .section h2 {
+            font-size: 20px;
+            font-weight: 700;
+            color: #0056b3;
+            margin-bottom: 15px;
+        }
+        .section.assumption h2 {
+            color: #b30000;
+        }
+        .subsection {
+            margin-bottom: 15px;
+        }
+        .subsection h3 {
+            font-size: 18px;
+            font-weight: 600;
+            color: #28a745;
+            margin-bottom: 10px;
+        }
+        .note {
+            font-size: 12px;
+            color: #666;
+            margin-top: 5px;
+        }
+        .monitoring-table-container {
+            overflow-x: auto;
+            max-width: 100%;
+            margin-top: 20px;
+        }
+        .monitoring-table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1200px;
+            background: #fff;
+        }
+        .monitoring-table th, .monitoring-table td {
+            border: 1px solid #dee2e6;
+            padding: 12px 15px;
+            text-align: right;
+            white-space: nowrap;
+            font-size: 14px;
+        }
+        .monitoring-table th {
+            background-color: #007bff;
+            color: #fff;
+            font-weight: 600;
+            text-align: center;
+        }
+        .monitoring-table td:first-child {
+            text-align: left;
+            font-weight: 500;
+            color: #333;
+        }
+        .monitoring-table input {
+            width: 100px;
+            text-align: right;
+        }
+        .monitoring-table .note-cell {
+            background-color: #e9ecef;
+            cursor: pointer;
+            color: #007bff;
+            text-decoration: underline;
+        }
+        .monitoring-table .note-cell:hover {
+            background-color: #dee2e6;
+        }
+        .monitoring-table .subcategory {
+            padding-left: 20px;
+            font-style: italic;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Cost Model Calculator</h1>
+        <div class="tabs">
+            <div class="tab active" onclick="showTab('settings')">Settings</div>
+            <div class="tab" onclick="showTab('expense')">Expense</div>
+            <div class="tab" onclick="showTab('dashboard')">Dashboard</div>
+            <div class="tab" onclick="showTab('monitoring')">Monitoring</div>
+        </div>
+        <div id="settings" class="tab-content active">
+            <h2>Settings</h2>
+            <div class="section actual">
+                <h2>Actual</h2>
+                <div class="subsection">
+                    <h3>Base Premises</h3>
+                    <div class="form-group">
+                        <label>Units Price (IDR)</label>
+                        <input type="text" id="unitsPrice" oninput="formatInputWithSeparator(this)">
+                    </div>
+                    <p style="font-size: 12px; color: #666;">*exclude PPN</p>
+                    <div class="form-group">
+                        <label>Qty of Units (units)</label>
+                        <input type="number" id="qtyUnits" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Net Book Value (years)</label>
+                        <input type="number" id="netBookValue" min="0">
+                    </div>
+                </div>
+                <div class="subsection">
+                    <h3>Fuel </h3>
+                    <div class="form-group">
+                        <label>Solar (IDR/L)</label>
+                        <input type="text" id="solarPrice" oninput="formatInputWithSeparator(this)">
+                    </div>
+                </div>
+                <div class="subsection">
+                    <h3>AdBlue</h3>
+                    <div class="form-group">
+                        <label>AdBlue Price (IDR/L)</label>
+                        <input type="text" id="adBluePrice" oninput="formatInputWithSeparator(this)">
+                    </div>
+                </div>
+            </div>
+            <div class="section assumption">
+                <h2>Assumption</h2>
+                <div class="subsection">
+                    <h3>Retase</h3>
+                    <div class="form-group">
+                        <label>Number of Retase (ret/day)</label>
+                        <input type="number" id="retasePerDay" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Average Ritase / Day (km/day)</label>
+                        <input type="number" id="avgRitasePerDay" min="0">
+                    </div>
+                </div>
+                <div class="subsection">
+                    <h3>Fuel Consumption</h3>
+                    <div class="form-group">
+                        <label>Fuel Consumption (km/L)</label>
+                        <input type="number" id="fuelConsumption" min="0" step="0.01">
+                    </div>
+                    <p style="font-size: 12px; color: #666;">*Syarat dan ketentuan berlaku<br>Driver Habbit, Capacity Load, Road Construction</p>
+                </div>
+                <div class="subsection">
+                    <h3>AdBlue Consumption</h3>
+                    <div class="form-group">
+                        <label>AdBlue (km/L)</label>
+                        <input type="number" id="adBlue" min="0" step="0.01">
+                    </div>
+                </div>
+                <div class="subsection">
+                    <h3>Day Operation</h3>
+                    <div class="form-group">
+                        <label>Day Operation (Days in a Month)</label>
+                        <input type="number" id="dayOperation" min="0">
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div id="expense" class="tab-content">
+            <h2>Expense</h2>
+            <div class="section actual">
+                <h2>Actual</h2>
+                <div class="subsection">
+                    <h3>Base Premises</h3>
+                    <div class="form-group">
+                        <label>Insurance (IDR/Year)</label>
+                        <input type="text" id="insuranceUnit" oninput="formatInputWithSeparator(this)">
+                    </div>
+                    <div class="form-group">
+                        <label>First Payment (IDR)</label>
+                        <input type="text" id="firstPayment" oninput="formatInputWithSeparator(this)">
+                    </div>
+                    <div class="form-group">
+                        <label>Leasing Payment (IDR, Flat for 3 Years)</label>
+                        <input type="text" id="leasingPayment" oninput="formatInputWithSeparator(this)">
+                    </div>
+                    <div class="form-group">
+                        <label>Tax Vehicle (IDR/Year)</label>
+                        <input type="text" id="vehicleTax" oninput="formatInputWithSeparator(this)">
+                    </div>
+                    <div class="form-group">
+                        <label>KIR (IDR/Year)</label>
+                        <input type="text" id="kir" oninput="formatInputWithSeparator(this)">
+                    </div>
+                </div>
+                <div class="subsection">
+                    <h3>Telematics Module</h3>
+                    <div class="form-group">
+                        <label>One Time Cost (IDR)</label>
+                        <input type="text" id="telematicsOneTimeCost" oninput="formatInputWithSeparator(this)">
+                    </div>
+                    <div class="form-group">
+                        <label>Recurring Cost (IDR/Month)</label>
+                        <input type="text" id="telematicsRecurringCost" oninput="formatInputWithSeparator(this)">
+                    </div>
+                </div>
+                <div class="subsection">
+                    <h3>Tyre Management</h3>
+                    <div class="form-group">
+                        <label>Tire Price (IDR/Tyre)</label>
+                        <input type="text" id="tirePrice" oninput="formatInputWithSeparator(this)">
+                    </div>
+                    <div class="form-group">
+                        <label>Lifetime Tyre (Km)</label>
+                        <input type="text" id="lifetimeTyre" oninput="formatInputWithSeparator(this)">
+                    </div>
+                </div>                
+                <div class="subsection">
+                    <h3>Preventive Maintenance/PM</h3>
+                    <div class="form-group">
+                        <label>Oil Price (IDR)</label>
+                        <input type="text" id="oilPrice" oninput="formatInputWithSeparator(this); updatePMNotes()">
+                    </div>
+                    <div class="maintenance-inputs">
+                        <div>
+                            <label>1st Year</label>
+                            <input type="text" id="pm1" oninput="formatInputWithSeparator(this); updatePMNotes()">
+                            <p id="pm1-note" class="note"></p>
+                        </div>
+                        <div>
+                            <label>2nd Year</label>
+                            <input type="text" id="pm2" oninput="formatInputWithSeparator(this); updatePMNotes()">
+                            <p id="pm2-note" class="note"></p>
+                        </div>
+                        <div>
+                            <label>3rd Year</label>
+                            <input type="text" id="pm3" oninput="formatInputWithSeparator(this); updatePMNotes()">
+                            <p id="pm3-note" class="note"></p>
+                        </div>
+                        <div>
+                            <label>4th Year</label>
+                            <input type="text" id="pm4" oninput="formatInputWithSeparator(this); updatePMNotes()">
+                            <p id="pm4-note" class="note"></p>
+                        </div>
+                        <div>
+                            <label>5th Year</label>
+                            <input type="text" id="pm5" oninput="formatInputWithSeparator(this); updatePMNotes()">
+                            <p id="pm5-note" class="note"></p>
+                        </div>
+                        <div>
+                            <label>6th Year</label>
+                            <input type="text" id="pm6" oninput="formatInputWithSeparator(this); updatePMNotes()">
+                            <p id="pm6-note" class="note"></p>
+                        </div>
+                        <div>
+                            <label>7th Year</label>
+                            <input type="text" id="pm7" oninput="formatInputWithSeparator(this); updatePMNotes()">
+                            <p id="pm7-note" class="note"></p>
+                        </div>
+                        <div>
+                            <label>8th Year</label>
+                            <input type="text" id="pm8" oninput="formatInputWithSeparator(this); updatePMNotes()">
+                            <p id="pm8-note" class="note"></p>
+                        </div>
+                        <div>
+                            <label>9th Year</label>
+                            <input type="text" id="pm9" oninput="formatInputWithSeparator(this); updatePMNotes()">
+                            <p id="pm9-note" class="note"></p>
+                        </div>
+                        <div>
+                            <label>10th Year</label>
+                            <input type="text" id="pm10" oninput="formatInputWithSeparator(this); updatePMNotes()">
+                            <p id="pm10-note" class="note"></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="subsection">
+                    <h3>General Repair/GR</h3>
+                    <div class="maintenance-inputs">
+                        <div><label>1st Year</label><input type="text" id="gm1" oninput="formatInputWithSeparator(this)"></div>
+                        <div><label>2nd Year</label><input type="text" id="gm2" oninput="formatInputWithSeparator(this)"></div>
+                        <div><label>3rd Year</label><input type="text" id="gm3" oninput="formatInputWithSeparator(this)"></div>
+                        <div><label>4th Year</label><input type="text" id="gm4" oninput="formatInputWithSeparator(this)"></div>
+                        <div><label>5th Year</label><input type="text" id="gm5" oninput="formatInputWithSeparator(this)"></div>
+                        <div><label>6th Year</label><input type="text" id="gm6" oninput="formatInputWithSeparator(this)"></div>
+                        <div><label>7th Year</label><input type="text" id="gm7" oninput="formatInputWithSeparator(this)"></div>
+                        <div><label>8th Year</label><input type="text" id="gm8" oninput="formatInputWithSeparator(this)"></div>
+                        <div><label>9th Year</label><input type="text" id="gm9" oninput="formatInputWithSeparator(this)"></div>
+                        <div><label>10th Year</label><input type="text" id="gm10" oninput="formatInputWithSeparator(this)"></div>
+                    </div>
+                </div>
+            </div>
+            <div class="section assumption">
+                <h2>Assumption</h2>
+                <div class="subsection">
+                    <h3>Operation</h3>
+                    <div class="form-group">
+                        <label>Average Toll Cost (IDR/Day)</label>
+                        <input type="text" id="tollCost" oninput="formatInputWithSeparator(this)">
+                    </div>
+                    <div class="form-group">
+                        <label>Driver per Units</label>
+                        <input type="number" id="driverPerUnit" min="0">
+                    </div>
+                    <div class="form-group">
+                        <label>Driver Cost (IDR/Ret)</label>
+                        <input type="text" id="driverCost" oninput="formatInputWithSeparator(this)">
+                    </div>
+                </div>
+                <div class="subsection">
+                    <h3>Tyre Management</h3>
+                    <div class="form-group">
+                        <label>Tyre / Unit (Tyre)</label>
+                        <input type="number" id="tyrePerUnit" min="0">
+                    </div>
+                </div>
+                <div class="subsection">
+                    <h3>Downtime</h3>
+                    <div class="form-group">
+                        <label>Downtime Percentage Assumption (%)</label>
+                        <input type="number" id="downtime" min="0" max="100" step="0.01">
+                    </div>
+                </div>
+            </div>
+            <h3>Units Depreciation (Default Values)</h3>
+            <p>1st Year (8% - 12%): 12%</p>
+            <p>2nd Year (5% - 10%): 22%</p>
+            <p>3rd Year (4% - 8%): 30%</p>
+            <p>4th Year (4% - 6%): 36%</p>
+            <p>5th Year (2% - 4%): 40%</p>
+            <button onclick="calculateTCO()">Calculate</button>
+            <div id="results" class="results"></div>
+        </div>
+        <div id="dashboard" class="tab-content">
+            <h2>Dashboard</h2>
+            <div class="form-group">
+                <label>Years to Display</label>
+                <select id="yearsToDisplay" onchange="calculateTCO()">
+                    <option value="5">5 Years</option>
+                    <option value="6">6 Years</option>
+                    <option value="7">7 Years</option>
+                    <option value="8">8 Years</option>
+                    <option value="9">9 Years</option>
+                    <option value="10">10 Years</option>
+                </select>
+            </div>
+            <div class="dashboard-table-container">
+                <table class="dashboard-table" id="dashboard-table">
+                    <thead id="dashboard-table-head">
+                        <tr>
+                            <th>Component</th>
+                            <th>Price (IDR)</th>
+                            <th>1st Year</th>
+                            <th>2nd Year</th>
+                            <th>3rd Year</th>
+                            <th>4th Year</th>
+                            <th>5th Year</th>
+                        </tr>
+                    </thead>
+                    <tbody id="dashboard-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+        <div id="monitoring" class="tab-content">
+            <h2>Monitoring</h2>
+            <div class="form-group">
+                <label>Year to Monitor</label>
+                <select id="yearToMonitor" onchange="updateMonitoringTable()">
+                    <option value="1">1st Year</option>
+                    <option value="2">2nd Year</option>
+                    <option value="3">3rd Year</option>
+                    <option value="4">4th Year</option>
+                    <option value="5">5th Year</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Nomor Polisi Unit</label>
+                <input type="text" id="unitPoliceNumber" placeholder="e.g., B 1234 AB">
+            </div>
+            <div class="monitoring-table-container">
+                <table class="monitoring-table" id="monitoring-table">
+                    <thead id="monitoring-table-head"></thead>
+                    <tbody id="monitoring-table-body"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <script>
+        function formatInputWithSeparator(input) {
+            const cursorPosition = input.selectionStart;
+            let raw = input.value.replace(/[^0-9.]/g, "");
+            let parts = raw.split(".");
+            let integerPart = parts[0];
+            let decimalPart = parts[1] || "";
+            let formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+            let formatted = decimalPart.length > 0 ? `${formattedInteger}.${decimalPart}` : formattedInteger;
+            input.value = formatted;
+            input.dataset.raw = raw;
+            let newCursorPosition = formatted.length - (raw.length - cursorPosition);
+            input.setSelectionRange(newCursorPosition, newCursorPosition);
+        }
+
+        function parseFormattedNumber(value) {
+            return parseFloat(value.replace(/,/g, "")) || 0;
+        }
+
+        function formatNumberWithSeparator(value) {
+            const number = parseFloat(value) || 0;
+            if (number >= 1000) {
+                const parts = number.toFixed(2).split(".");
+                const integerPart = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+                return `${integerPart}.${parts[1]}`;
+            }
+            return number.toFixed(2);
+        }
+
+        function updatePMNotes() {
+            const oilPrice = parseFormattedNumber(document.getElementById('oilPrice').value);
+            for (let i = 1; i <= 10; i++) {
+                const pmCost = parseFormattedNumber(document.getElementById(`pm${i}`).value);
+                let adjustedCost = pmCost;
+                if (oilPrice > 0) {
+                    adjustedCost = i === 1 ? (pmCost - 2800000) + (oilPrice * 20 * 2) : (pmCost - 1400000) + (oilPrice * 20);
+                }
+                document.getElementById(`pm${i}-note`).textContent = `pm cost adjusted with oil price - ${i}th year = ${formatNumberWithSeparator(adjustedCost)}`;
+            }
+        }
+
+        function calculateTCO() {
+            // Get global variables
+            const unitsPrice = parseFormattedNumber(document.getElementById('unitsPrice').value);
+            const qtyUnits = parseFloat(document.getElementById('qtyUnits').value) || 0;
+            const netBookValue = parseFloat(document.getElementById('netBookValue').value) || 0;
+            const retasePerDay = parseFloat(document.getElementById('retasePerDay').value) || 0;
+            const avgRitasePerDay = parseFloat(document.getElementById('avgRitasePerDay').value) || 0;
+            const fuelConsumption = parseFloat(document.getElementById('fuelConsumption').value) || 0;
+            const solarPrice = parseFormattedNumber(document.getElementById('solarPrice').value);
+            const adBlue = parseFloat(document.getElementById('adBlue').value) || 0;
+            const adBluePrice = parseFormattedNumber(document.getElementById('adBluePrice').value);
+            const dayOperation = parseFloat(document.getElementById('dayOperation').value) || 0;
+
+            // Get expense variables
+            const tollCost = parseFormattedNumber(document.getElementById('tollCost').value);
+            const driverPerUnit = parseFloat(document.getElementById('driverPerUnit').value) || 0;
+            const driverCost = parseFormattedNumber(document.getElementById('driverCost').value);
+            const tirePrice = parseFormattedNumber(document.getElementById('tirePrice').value);
+            const tyrePerUnit = parseFloat(document.getElementById('tyrePerUnit').value) || 0;
+            const lifetimeTyre = parseFormattedNumber(document.getElementById('lifetimeTyre').value);
+            const vehicleTax = parseFormattedNumber(document.getElementById('vehicleTax').value);
+            const insuranceUnit = parseFormattedNumber(document.getElementById('insuranceUnit').value);
+            const kir = parseFormattedNumber(document.getElementById('kir').value);
+            const firstPayment = parseFormattedNumber(document.getElementById('firstPayment').value);
+            const leasingPayment = parseFormattedNumber(document.getElementById('leasingPayment').value);
+            const downtimePercentage = parseFloat(document.getElementById('downtime').value) || 0;
+            const oilPrice = parseFormattedNumber(document.getElementById('oilPrice').value);
+            const telematicsOneTimeCost = parseFormattedNumber(document.getElementById('telematicsOneTimeCost').value);
+            const telematicsRecurringCost = parseFormattedNumber(document.getElementById('telematicsRecurringCost').value);
+
+            // Get maintenance costs and adjust PM costs
+            const pmCosts = [];
+            const gmCosts = [];
+            for (let i = 1; i <= 10; i++) {
+                const pmCost = parseFormattedNumber(document.getElementById(`pm${i}`).value);
+                let adjustedPMCost = pmCost;
+                if (oilPrice > 0) {
+                    adjustedPMCost = i === 1 ? (pmCost - 2800000) + (oilPrice * 20 * 2) : (pmCost - 1400000) + (oilPrice * 20);
+                }
+                pmCosts.push(adjustedPMCost);
+                gmCosts.push(parseFormattedNumber(document.getElementById(`gm${i}`).value));
+            }
+
+            // Telematics Module calculations
+            const telematicsCostPerMonth = telematicsRecurringCost;
+            const telematicsCostFirstYear = (telematicsRecurringCost * 12) + telematicsOneTimeCost;
+            const telematicsCostSubsequentYears = telematicsRecurringCost * 12;
+
+            // Update PM notes
+            updatePMNotes();
+
+            // Calculations
+            // 1. Retase
+            const avgRetPerMonth = avgRitasePerDay * dayOperation;
+            const avgRetPerYear = avgRetPerMonth * 12;
+
+            // 2. Fuel Consumption
+            const fuelConsumptionPerRet = fuelConsumption ? avgRitasePerDay / fuelConsumption : 0;
+            const fuelConsumptionPerMonth = fuelConsumptionPerRet * dayOperation;
+            const fuelConsumptionPerYear = fuelConsumptionPerMonth * 12;
+            const solarPerYear = solarPrice * fuelConsumptionPerYear;
+
+            // 3. AdBlue
+            const adBlueConsumptionPerDay = adBlue ? (avgRitasePerDay / adBlue) * adBluePrice : 0;
+            const adBlueConsumptionPerMonth = adBlueConsumptionPerDay * dayOperation;
+            const adBlueConsumptionPerYear = adBlueConsumptionPerMonth * 12;
+
+            // 4. Operation
+            const driverCostPerMonth = (driverCost * dayOperation * retasePerDay) + (tollCost * dayOperation);
+            const driverCostPerYear = driverCostPerMonth * 12;
+
+            // 5. Tyre Management
+            const costPerUnit = tirePrice * tyrePerUnit;
+            const idrPerKm = lifetimeTyre ? tirePrice / lifetimeTyre : 0;
+            const idrPerKmUnit = idrPerKm * tyrePerUnit;
+            const costDays = idrPerKmUnit * avgRitasePerDay;
+            const costMonth = idrPerKmUnit * avgRetPerMonth;
+            const costYear = idrPerKmUnit * avgRetPerYear;
+
+            // 6. Unit Payment
+            const unitDownPayment = unitsPrice * 0.3;
+            const financing = unitsPrice * 0.7;
+            const leasingPaymentYearly = leasingPayment * 12;
+
+            // 7. Total Cost non Units (dynamic based on yearsToDisplay)
+            const yearsToDisplay = parseInt(document.getElementById('yearsToDisplay').value);
+            const totalCostNonUnits = 
+                (vehicleTax * yearsToDisplay) + 
+                (insuranceUnit) + 
+                (kir * yearsToDisplay) + 
+                (solarPerYear * yearsToDisplay) + 
+                (adBlueConsumptionPerYear * yearsToDisplay) + 
+                (driverCostPerYear * yearsToDisplay) + 
+                pmCosts.slice(0, yearsToDisplay).reduce((sum, cost) => sum + cost, 0) + 
+                gmCosts.slice(0, yearsToDisplay).reduce((sum, cost) => sum + cost, 0) + 
+                (costYear * yearsToDisplay) +
+                (telematicsCostFirstYear) + (telematicsCostSubsequentYears * (yearsToDisplay - 1));
+
+            // 8. Downtime Cost Estimate
+            const downtimeCostEstimate = (totalCostNonUnits * (downtimePercentage / 100));
+
+            // Display results in Expense tab with individual cards
+            const resultsDiv = document.getElementById('results');
+            resultsDiv.innerHTML = `
+                <div class="results">
+                    <div class="result-card">
+                        <h4>Unit Payment</h4>
+                        <p>Unit Down Payment: ${formatNumberWithSeparator(unitDownPayment)} IDR</p>
+                        <p>Financing: ${formatNumberWithSeparator(financing)} IDR</p>
+                    </div>
+                    <div class="result-card">
+                        <h4>Retase</h4>
+                        <p>Average Ret per-Month: ${formatNumberWithSeparator(avgRetPerMonth)} Km/Month</p>
+                        <p>Average Ret per-Year: ${formatNumberWithSeparator(avgRetPerYear)} Km/Year</p>
+                    </div>
+                    <div class="result-card">
+                        <h4>Fuel Consumption</h4>
+                        <p>Fuel Consumption/Ret: ${formatNumberWithSeparator(fuelConsumptionPerRet)} L/Day</p>
+                        <p>Fuel Consumption/Month: ${formatNumberWithSeparator(fuelConsumptionPerMonth)} L/Month</p>
+                        <p>Fuel Consumption/Year: ${formatNumberWithSeparator(fuelConsumptionPerYear)} L/Year</p>
+                        <p>Solar/Year: ${formatNumberWithSeparator(solarPerYear)} IDR/Year</p>
+                    </div>
+                    <div class="result-card">
+                        <h4>AdBlue</h4>
+                        <p>AdBlue Consumption: ${formatNumberWithSeparator(adBlueConsumptionPerDay)} IDR/Day</p>
+                        <p>AdBlue Consumption/Month: ${formatNumberWithSeparator(adBlueConsumptionPerMonth)} IDR/Month</p>
+                        <p>AdBlue Consumption/Year: ${formatNumberWithSeparator(adBlueConsumptionPerYear)} IDR/Year</p>
+                    </div>
+                    <div class="result-card">
+                        <h4>Operation</h4>
+                        <p>Driver Cost: ${formatNumberWithSeparator(driverCostPerMonth)} IDR/Month</p>
+                        <p>Driver Cost: ${formatNumberWithSeparator(driverCostPerYear)} IDR/Year</p>
+                    </div>
+                    <div class="result-card">
+                        <h4>Tyre Management</h4>
+                        <p>Cost/Unit: ${formatNumberWithSeparator(costPerUnit)} IDR/Unit</p>
+                        <p>IDR/Km: ${formatNumberWithSeparator(idrPerKm)} IDR/Km/Tyre</p>
+                        <p>IDR/KM/Unit: ${formatNumberWithSeparator(idrPerKmUnit)} IDR/Km/Unit</p>
+                        <p>Cost Days: ${formatNumberWithSeparator(costDays)} IDR/Day</p>
+                        <p>Cost Month: ${formatNumberWithSeparator(costMonth)} IDR/Month</p>
+                        <p>Cost Year: ${formatNumberWithSeparator(costYear)} IDR/Year</p>
+                    </div>
+                    <div class="result-card">
+                        <h4>Telematics Module</h4>
+                        <p>Cost per Month: ${formatNumberWithSeparator(telematicsCostPerMonth)} IDR/Month</p>
+                        <p>Cost per Year (1st Year): ${formatNumberWithSeparator(telematicsCostFirstYear)} IDR/Year</p>
+                        <p>Cost per Year (2nd Year, etc.): ${formatNumberWithSeparator(telematicsCostSubsequentYears)} IDR/Year</p>
+                    </div>
+                    <div class="result-card">
+                        <h4>Additional Calculations</h4>
+                        <p>Total Cost non Units: ${formatNumberWithSeparator(totalCostNonUnits)} IDR</p>
+                        <p>Downtime Cost Estimate: ${formatNumberWithSeparator(downtimeCostEstimate)} IDR</p>
+                    </div>
+                </div>
+            `;
+
+            // Populate Dashboard table
+            const dashboardTableHead = document.getElementById('dashboard-table-head');
+            const dashboardTableBody = document.getElementById('dashboard-table-body');
+            const yearlyTotals = new Array(10).fill(0);
+
+            // Dynamically generate table header based on yearsToDisplay
+            const headerHTML = `
+                <tr>
+                    <th>Component</th>
+                    <th>Price (IDR)</th>
+                    <th>1st Year</th>
+                    <th>2nd Year</th>
+                    <th>3rd Year</th>
+                    <th>4th Year</th>
+                    <th>5th Year</th>
+                    ${yearsToDisplay > 5 ? `<th>6th Year</th>` : ''}
+                    ${yearsToDisplay > 6 ? `<th>7th Year</th>` : ''}
+                    ${yearsToDisplay > 7 ? `<th>8th Year</th>` : ''}
+                    ${yearsToDisplay > 8 ? `<th>9th Year</th>` : ''}
+                    ${yearsToDisplay > 9 ? `<th>10th Year</th>` : ''}
+                </tr>
+            `;
+            dashboardTableHead.innerHTML = headerHTML;
+
+            // Telematics Module yearly costs
+            const telematicsCosts = [telematicsCostFirstYear, ...new Array(9).fill(telematicsCostSubsequentYears)];
+
+            const rows = [
+                { category: 'Actual', label: 'Harga Units', assumption: unitsPrice, values: new Array(10).fill(0) },
+                { category: 'Actual', label: 'Uang Muka (30%)', assumption: unitDownPayment, values: [unitDownPayment, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+                { category: 'Actual', label: 'Pembiayaan (70%)', assumption: financing, values: [leasingPaymentYearly, leasingPaymentYearly, leasingPaymentYearly, 0, 0, 0, 0, 0, 0, 0] },
+                { category: 'Actual', label: 'First Payment', assumption: firstPayment, values: [firstPayment, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+                { category: 'Actual', label: 'Pajak & STNK', assumption: vehicleTax, values: [0, vehicleTax, vehicleTax, vehicleTax, vehicleTax, vehicleTax, vehicleTax, vehicleTax, vehicleTax, vehicleTax] },
+                { category: 'Actual', label: 'Asuransi', assumption: insuranceUnit, values: [insuranceUnit, 0, 0, 0, 0, 0, 0, 0, 0, 0] },
+                { category: 'Actual', label: 'KIR', assumption: kir, values: new Array(10).fill(kir) },
+                { category: 'Actual', label: 'Telematics Module', assumption: 'Yearly', values: telematicsCosts },
+                { category: 'Assumption', label: 'Service Berkala/PM', assumption: 'Yearly', values: pmCosts.slice(0, 10) },
+                { category: 'Assumption', label: 'Service General/GM', assumption: 'Yearly', values: gmCosts.slice(0, 10) },
+                { category: 'Assumption', label: 'BBM', assumption: solarPerYear, values: new Array(10).fill(solarPerYear) },
+                { category: 'Assumption', label: 'AdBlue', assumption: adBlueConsumptionPerYear, values: new Array(10).fill(adBlueConsumptionPerYear) },
+                { category: 'Assumption', label: 'Driver Cost', assumption: driverCostPerYear, values: new Array(10).fill(driverCostPerYear) },
+                { category: 'Assumption', label: 'Ban', assumption: costYear, values: new Array(10).fill(costYear) },
+                { category: 'Assumption', label: 'Downtime (1%)', assumption: `${downtimePercentage}%`, values: new Array(10).fill(downtimeCostEstimate) }
+            ];
+
+            let tableHTML = '';
+            let currentCategory = '';
+            let actualTotals = new Array(10).fill(0);
+            let assumptionTotals = new Array(10).fill(0);
+
+            rows.forEach(row => {
+                if (row.category !== currentCategory) {
+                    if (currentCategory === 'Actual' && actualTotals.some(t => t > 0)) {
+                        tableHTML += '<tr class="total-row"><td>Total Actual</td><td></td>';
+                        for (let i = 0; i < 10; i++) {
+                            tableHTML += `<td ${i >= yearsToDisplay ? 'style="display:none"' : ''}>${formatNumberWithSeparator(actualTotals[i])}</td>`;
+                            yearlyTotals[i] = actualTotals[i];
+                        }
+                        tableHTML += '</tr>';
+                    } else if (currentCategory === 'Assumption' && assumptionTotals.some(t => t > 0)) {
+                        tableHTML += '<tr class="total-row"><td>Total Assumptions</td><td></td>';
+                        for (let i = 0; i < 10; i++) {
+                            tableHTML += `<td ${i >= yearsToDisplay ? 'style="display:none"' : ''}>${formatNumberWithSeparator(assumptionTotals[i])}</td>`;
+                            yearlyTotals[i] += assumptionTotals[i];
+                        }
+                        tableHTML += '</tr>';
+                    }
+                    if (row.category === 'Assumption') {
+                        tableHTML += `<tr class="category" style="background-color: #28a745 !important;"><td>${row.category}</td><td></td>`;
+                        for (let i = 0; i < 10; i++) {
+                            tableHTML += `<td ${i >= yearsToDisplay ? 'style="display:none"' : ''}></td>`;
+                        }
+                        tableHTML += '</tr>';
+                    } else {
+                        tableHTML += `<tr class="category" style="background-color: #28a745 !important;"><td>${row.category}</td><td colspan="${yearsToDisplay + 1}"></td></tr>`;
+                    }
+                    currentCategory = row.category;
+                    actualTotals = new Array(10).fill(0);
+                    assumptionTotals = new Array(10).fill(0);
+                }
+                tableHTML += '<tr>';
+                tableHTML += `<td>${row.label}</td>`;
+                const assumptionValue = typeof row.assumption === 'number' ? formatNumberWithSeparator(row.assumption) : row.assumption;
+                tableHTML += `<td class="assumption">${assumptionValue}</td>`;
+                for (let i = 0; i < 10; i++) {
+                    const displayValue = typeof row.values[i] === 'string' ? row.values[i] : formatNumberWithSeparator(row.values[i]);
+                    tableHTML += `<td ${i >= yearsToDisplay ? 'style="display:none"' : ''}>${displayValue}</td>`;
+                    if (typeof row.values[i] === 'number' && i < yearsToDisplay) {
+                        if (row.category === 'Actual') actualTotals[i] += row.values[i];
+                        else if (row.category === 'Assumption') assumptionTotals[i] += row.values[i];
+                    }
+                }
+                tableHTML += '</tr>';
+            });
+
+            if (currentCategory === 'Actual' && actualTotals.some(t => t > 0)) {
+                tableHTML += '<tr class="total-row"><td>Total Actual</td><td></td>';
+                for (let i = 0; i < 10; i++) {
+                    tableHTML += `<td ${i >= yearsToDisplay ? 'style="display:none"' : ''}>${formatNumberWithSeparator(actualTotals[i])}</td>`;
+                    yearlyTotals[i] = actualTotals[i];
+                }
+                tableHTML += '</tr>';
+            } else if (currentCategory === 'Assumption' && assumptionTotals.some(t => t > 0)) {
+                tableHTML += '<tr class="total-row"><td>Total Assumptions</td><td></td>';
+                for (let i = 0; i < 10; i++) {
+                    tableHTML += `<td ${i >= yearsToDisplay ? 'style="display:none"' : ''}>${formatNumberWithSeparator(assumptionTotals[i])}</td>`;
+                    yearlyTotals[i] += assumptionTotals[i];
+                }
+                tableHTML += '</tr>';
+            }
+
+            tableHTML += '<tr class="total-per-year"><td>Total per Year</td><td></td>';
+            for (let i = 0; i < 10; i++) {
+                tableHTML += `<td ${i >= yearsToDisplay ? 'style="display:none"' : ''}>${formatNumberWithSeparator(yearlyTotals[i])}</td>`;
+            }
+            tableHTML += '</tr>';
+
+            tableHTML += '<tr><td>Monthly Cost</td><td></td>';
+            for (let i = 0; i < 10; i++) {
+                const monthly = yearlyTotals[i] / 12;
+                tableHTML += `<td ${i >= yearsToDisplay ? 'style="display:none"' : ''}>${formatNumberWithSeparator(monthly)}</td>`;
+            }
+            tableHTML += '</tr>';
+
+            const grandTotal = yearlyTotals.slice(0, yearsToDisplay).reduce((sum, total) => sum + total, 0);
+            tableHTML += `<tr class="grand-total"><td>Grand Total</td><td></td><td colspan="${yearsToDisplay}">${formatNumberWithSeparator(grandTotal)}</td>`;
+            for (let i = yearsToDisplay; i < 10; i++) {
+                tableHTML += '<td style="display:none"></td>';
+            }
+            tableHTML += '</tr>';
+
+            dashboardTableBody.innerHTML = tableHTML;
+            // Debug: Pastikan elemen grand-total ada dan gaya diterapkan
+            const grandTotalRow = document.querySelector('.grand-total');
+            if (grandTotalRow) {
+                grandTotalRow.style.backgroundColor = '#0056b3';
+                grandTotalRow.style.color = '#fff';
+            }
+
+            updateMonitoringTable();
+        }
+
+   function updateMonitoringTable() {
+    const year = parseInt(document.getElementById('yearToMonitor').value);
+    const weeks = Array.from({ length: 52 }, (_, i) => `W${i + 1}`);
+
+    const components = [
+        { label: 'Service Berkala/PM', sub: [], note: true },
+        { label: 'Service General/GM', sub: [], note: true },
+        { label: 'BBM', sub: ['Fuel Consumption', 'Fuel Price'], note: false },
+        { label: 'AdBlue', sub: ['AdBlue Consumption', 'AdBlue Price'], note: false },
+        { label: 'Driver Cost', sub: ['Driver Per Units', 'Driver Cost'], note: false },
+        { label: 'Ban', sub: ['Tire Price', 'Tyre per Units'], note: false },
+        { label: 'Downtime (1%)', sub: ['Downtime percentage assumption'], note: false }
+    ];
+
+    let headerHTML = `
+        <tr>
+            <th>Component</th>
+            ${weeks.map(w => `<th>${w}</th>`).join('')}
+        </tr>
+    `;
+    document.getElementById('monitoring-table-head').innerHTML = headerHTML;
+
+    let tableHTML = '';
+    components.forEach(component => {
+        tableHTML += '<tr>';
+        tableHTML += `<td>${component.label}</td>`;
+        weeks.forEach(week => {
+            const id = `${component.label.replace(/ /g, '_').replace(/[()]/g, '')}_${year}_${week}`;
+            tableHTML += `
+                <td>
+                    ${component.sub.length > 0 ? '' : `<input type="text" id="${id}" oninput="formatInputWithSeparator(this)" placeholder="0.00">`}
+                    ${(component.sub.length === 0 && component.note) ? `<span class="note-cell" onclick="showNote('${id}')">Note</span>` : ''}
+                </td>
+            `;
+        });
+        tableHTML += '</tr>';
+
+        component.sub.forEach(sub => {
+            tableHTML += '<tr>';
+            tableHTML += `<td class="subcategory">${sub}</td>`;
+            weeks.forEach(week => {
+                const id = `${component.label.replace(/ /g, '_').replace(/[()]/g, '')}_${sub.replace(/ /g, '_')}_${year}_${week}`;
+                tableHTML += `
+                    <td>
+                        <input type="text" id="${id}" oninput="formatInputWithSeparator(this)" placeholder="0.00">
+                        <span class="note-cell" onclick="showNote('${id}')">Note</span>
+                    </td>
+                `;
+            });
+            tableHTML += '</tr>';
+        });
+    });
+
+    document.getElementById('monitoring-table-body').innerHTML = tableHTML;
+}
+
+
+
+        function showNote(id) {
+            const input = document.getElementById(id);
+            const currentValue = input ? input.value || '0.00' : 'N/A';
+            const note = prompt(`Enter note for ${id} (Current value: ${currentValue} IDR):`, '');
+            if (note) {
+                alert(`Note saved for ${id}: ${note}`);
+                // Here you can implement storage (e.g., localStorage) if needed
+            }
+        }
+
+        function showTab(tabId) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            document.querySelector(`[onclick="showTab('${tabId}')"]`).classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        // Initialize tables on load
+        window.onload = function() {
+            calculateTCO();
+            updateMonitoringTable();
+        };
+    </script>
+
+    <!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Dashboard Chart Area -->
+<div class="dashboard-chart" style="width: 100%; max-width: 900px; margin: 20px auto;">
+  <canvas id="monitoringComparisonChart"></canvas>
+</div>
+
+<script>
+function renderMonitoringChart() {
+    const labels = ['BBM', 'AdBlue', 'Driver Cost', 'Ban', 'Downtime'];
+
+    const assumptionData = [
+        12000000, // BBM
+        3000000,  // AdBlue
+        8000000,  // Driver Cost
+        4000000,  // Ban
+        2000000   // Downtime
+    ];
+
+    const actualData = [
+        13500000,
+        2800000,
+        7500000,
+        4100000,
+        1800000
+    ];
+
+    const ctx = document.getElementById('monitoringComparisonChart').getContext('2d');
+    new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: labels,
+            datasets: [
+                {
+                    label: 'Assumption (IDR)',
+                    data: assumptionData,
+                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                    borderColor: 'rgba(54, 162, 235, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: 'Actual (IDR)',
+                    data: actualData,
+                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                    borderColor: 'rgba(255, 99, 132, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function (value) {
+                            return 'Rp ' + value.toLocaleString('id-ID');
+                        }
+                    }
+                }
+            },
+            plugins: {
+                title: {
+                    display: true,
+                    text: 'Monitoring Assumption vs Actual (Summary)',
+                    font: { size: 18 }
+                }
+            }
+        }
+    });
+}
+</script>
+
+<script>
+window.onload = function() {
+    calculateTCO();
+    updateMonitoringTable();
+    renderMonitoringChart();
+};
+</script>
+
+<style>
+.dashboard-chart {
+  background: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+}
+canvas {
+  max-width: 100%;
+  height: auto !important;
+}
+</style>
+
+<script>
+function updateMonitoringTable() {
+    const year = parseInt(document.getElementById('yearToMonitor').value);
+    const weeks = Array.from({ length: 52 }, (_, i) => `W${i + 1}`);
+
+    const components = [
+        { label: 'Service Berkala/PM', sub: [], note: true },
+        { label: 'Service General/GM', sub: [], note: true },
+        { label: 'BBM', sub: ['Fuel Consumption', 'Fuel Price'], note: false },
+        { label: 'AdBlue', sub: ['AdBlue Consumption', 'AdBlue Price'], note: false },
+        { label: 'Driver Cost', sub: ['Driver Per Units', 'Driver Cost'], note: false },
+        { label: 'Ban', sub: ['Tire Price', 'Tyre per Units'], note: false },
+        { label: 'Downtime (1%)', sub: ['Downtime percentage assumption'], note: false }
+    ];
+
+    let headerHTML = `
+        <tr>
+            <th>Component</th>
+            ${weeks.map(w => `<th>${w}</th>`).join('')}
+        </tr>
+    `;
+    document.getElementById('monitoring-table-head').innerHTML = headerHTML;
+
+    let tableHTML = '';
+    components.forEach(component => {
+        tableHTML += '<tr>';
+        tableHTML += `<td>${component.label}</td>`;
+        weeks.forEach(week => {
+            const id = `${component.label.replace(/ /g, '_').replace(/[()]/g, '')}_${year}_${week}`;
+            tableHTML += `
+                <td>
+                    ${component.sub.length > 0 ? '' : `<input type="text" id="${id}" oninput="formatInputWithSeparator(this)" placeholder="0.00">`}
+                    ${(component.sub.length === 0 && component.note) ? `<span class="note-cell" onclick="showNote('${id}')">Note</span>` : ''}
+                </td>
+            `;
+        });
+        tableHTML += '</tr>';
+
+        component.sub.forEach(sub => {
+            tableHTML += '<tr>';
+            tableHTML += `<td class="subcategory">${sub}</td>`;
+            weeks.forEach(week => {
+                const id = `${component.label.replace(/ /g, '_').replace(/[()]/g, '')}_${sub.replace(/ /g, '_')}_${year}_${week}`;
+                tableHTML += `
+                    <td>
+                        <input type="text" id="${id}" oninput="formatInputWithSeparator(this)" placeholder="0.00">
+                        <span class="note-cell" onclick="showNote('${id}')">Note</span>
+                    </td>
+                `;
+            });
+            tableHTML += '</tr>';
+        });
+    });
+
+    document.getElementById('monitoring-table-body').innerHTML = tableHTML;
+}
+</script>
+</body>
+</html>
