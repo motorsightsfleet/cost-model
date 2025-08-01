@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -910,7 +909,7 @@
             updateMonitoringTable();
         }
 
-   function updateMonitoringTable() {
+      function updateMonitoringTable() {
     const year = parseInt(document.getElementById('yearToMonitor').value);
     const weeks = Array.from({ length: 52 }, (_, i) => `W${i + 1}`);
 
@@ -918,7 +917,7 @@
         { label: 'Service Berkala/PM', sub: [], note: true },
         { label: 'Service General/GM', sub: [], note: true },
         { label: 'BBM', sub: ['Fuel Consumption', 'Fuel Price'], note: false },
-        { label: 'AdBlue', sub: ['AdBlue Consumption', 'AdBlue Price'], note: false },
+        { label: 'AdBlue', sub: ['AdBlue Consumption', 'AdBlue Price'], note: true },
         { label: 'Driver Cost', sub: ['Driver Per Units', 'Driver Cost'], note: false },
         { label: 'Ban', sub: ['Tire Price', 'Tyre per Units'], note: false },
         { label: 'Downtime (1%)', sub: ['Downtime percentage assumption'], note: false }
@@ -940,8 +939,8 @@
             const id = `${component.label.replace(/ /g, '_').replace(/[()]/g, '')}_${year}_${week}`;
             tableHTML += `
                 <td>
-                    ${component.sub.length > 0 ? '' : `<input type="text" id="${id}" oninput="formatInputWithSeparator(this)" placeholder="0.00">`}
-                    ${(component.sub.length === 0 && component.note) ? `<span class="note-cell" onclick="showNote('${id}')">Note</span>` : ''}
+                    ${component.sub.length > 0 ? '' : `<input type=\"text\" id=\"${id}\" oninput=\"formatInputWithSeparator(this)\" placeholder=\"0.00\">`}
+                    ${component.note ? `<span class=\"note-cell\" onclick=\"showNote('${id}')\">Note</span>` : ''}
                 </td>
             `;
         });
@@ -949,13 +948,13 @@
 
         component.sub.forEach(sub => {
             tableHTML += '<tr>';
-            tableHTML += `<td class="subcategory">${sub}</td>`;
+            tableHTML += `<td class=\"subcategory\">${sub}</td>`;
             weeks.forEach(week => {
                 const id = `${component.label.replace(/ /g, '_').replace(/[()]/g, '')}_${sub.replace(/ /g, '_')}_${year}_${week}`;
                 tableHTML += `
                     <td>
-                        <input type="text" id="${id}" oninput="formatInputWithSeparator(this)" placeholder="0.00">
-                        <span class="note-cell" onclick="showNote('${id}')">Note</span>
+                        <input type=\"text\" id=\"${id}\" oninput=\"formatInputWithSeparator(this)\" placeholder=\"0.00\">
+                        <span class=\"note-cell\" onclick=\"showNote('${id}')\">Note</span>
                     </td>
                 `;
             });
@@ -991,158 +990,5 @@
             updateMonitoringTable();
         };
     </script>
-
-    <!-- Chart.js CDN -->
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<!-- Dashboard Chart Area -->
-<div class="dashboard-chart" style="width: 100%; max-width: 900px; margin: 20px auto;">
-  <canvas id="monitoringComparisonChart"></canvas>
-</div>
-
-<script>
-function renderMonitoringChart() {
-    const labels = ['BBM', 'AdBlue', 'Driver Cost', 'Ban', 'Downtime'];
-
-    const assumptionData = [
-        12000000, // BBM
-        3000000,  // AdBlue
-        8000000,  // Driver Cost
-        4000000,  // Ban
-        2000000   // Downtime
-    ];
-
-    const actualData = [
-        13500000,
-        2800000,
-        7500000,
-        4100000,
-        1800000
-    ];
-
-    const ctx = document.getElementById('monitoringComparisonChart').getContext('2d');
-    new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [
-                {
-                    label: 'Assumption (IDR)',
-                    data: assumptionData,
-                    backgroundColor: 'rgba(54, 162, 235, 0.5)',
-                    borderColor: 'rgba(54, 162, 235, 1)',
-                    borderWidth: 1
-                },
-                {
-                    label: 'Actual (IDR)',
-                    data: actualData,
-                    backgroundColor: 'rgba(255, 99, 132, 0.5)',
-                    borderColor: 'rgba(255, 99, 132, 1)',
-                    borderWidth: 1
-                }
-            ]
-        },
-        options: {
-            responsive: true,
-            scales: {
-                y: {
-                    beginAtZero: true,
-                    ticks: {
-                        callback: function (value) {
-                            return 'Rp ' + value.toLocaleString('id-ID');
-                        }
-                    }
-                }
-            },
-            plugins: {
-                title: {
-                    display: true,
-                    text: 'Monitoring Assumption vs Actual (Summary)',
-                    font: { size: 18 }
-                }
-            }
-        }
-    });
-}
-</script>
-
-<script>
-window.onload = function() {
-    calculateTCO();
-    updateMonitoringTable();
-    renderMonitoringChart();
-};
-</script>
-
-<style>
-.dashboard-chart {
-  background: #fff;
-  border-radius: 8px;
-  padding: 20px;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
-}
-canvas {
-  max-width: 100%;
-  height: auto !important;
-}
-</style>
-
-<script>
-function updateMonitoringTable() {
-    const year = parseInt(document.getElementById('yearToMonitor').value);
-    const weeks = Array.from({ length: 52 }, (_, i) => `W${i + 1}`);
-
-    const components = [
-        { label: 'Service Berkala/PM', sub: [], note: true },
-        { label: 'Service General/GM', sub: [], note: true },
-        { label: 'BBM', sub: ['Fuel Consumption', 'Fuel Price'], note: false },
-        { label: 'AdBlue', sub: ['AdBlue Consumption', 'AdBlue Price'], note: false },
-        { label: 'Driver Cost', sub: ['Driver Per Units', 'Driver Cost'], note: false },
-        { label: 'Ban', sub: ['Tire Price', 'Tyre per Units'], note: false },
-        { label: 'Downtime (1%)', sub: ['Downtime percentage assumption'], note: false }
-    ];
-
-    let headerHTML = `
-        <tr>
-            <th>Component</th>
-            ${weeks.map(w => `<th>${w}</th>`).join('')}
-        </tr>
-    `;
-    document.getElementById('monitoring-table-head').innerHTML = headerHTML;
-
-    let tableHTML = '';
-    components.forEach(component => {
-        tableHTML += '<tr>';
-        tableHTML += `<td>${component.label}</td>`;
-        weeks.forEach(week => {
-            const id = `${component.label.replace(/ /g, '_').replace(/[()]/g, '')}_${year}_${week}`;
-            tableHTML += `
-                <td>
-                    ${component.sub.length > 0 ? '' : `<input type="text" id="${id}" oninput="formatInputWithSeparator(this)" placeholder="0.00">`}
-                    ${(component.sub.length === 0 && component.note) ? `<span class="note-cell" onclick="showNote('${id}')">Note</span>` : ''}
-                </td>
-            `;
-        });
-        tableHTML += '</tr>';
-
-        component.sub.forEach(sub => {
-            tableHTML += '<tr>';
-            tableHTML += `<td class="subcategory">${sub}</td>`;
-            weeks.forEach(week => {
-                const id = `${component.label.replace(/ /g, '_').replace(/[()]/g, '')}_${sub.replace(/ /g, '_')}_${year}_${week}`;
-                tableHTML += `
-                    <td>
-                        <input type="text" id="${id}" oninput="formatInputWithSeparator(this)" placeholder="0.00">
-                        <span class="note-cell" onclick="showNote('${id}')">Note</span>
-                    </td>
-                `;
-            });
-            tableHTML += '</tr>';
-        });
-    });
-
-    document.getElementById('monitoring-table-body').innerHTML = tableHTML;
-}
-</script>
 </body>
 </html>
