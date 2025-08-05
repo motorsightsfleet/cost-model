@@ -933,8 +933,8 @@ async function submitAllMonitoringData() {
             
             showAutoSaveNotification(`Berhasil menyimpan ${monitoringData.length} data monitoring!`, 'success');
             
-            // Refresh data terakhir
-            await loadAndDisplayLatestMonitoringData();
+            // Data monitoring terakhir tidak lagi ditampilkan di UI
+            // await loadAndDisplayLatestMonitoringData();
         } else {
             showAutoSaveNotification('Tidak ada data monitoring untuk disimpan', 'warning');
         }
@@ -1040,8 +1040,8 @@ async function submitAllExistingMonitoringData() {
             
             showAutoSaveNotification(`Berhasil menyimpan ${monitoringData.length} data existing monitoring!`, 'success');
             
-            // Refresh data terakhir
-            await loadAndDisplayLatestMonitoringData();
+            // Data monitoring terakhir tidak lagi ditampilkan di UI
+            // await loadAndDisplayLatestMonitoringData();
         } else {
             showAutoSaveNotification('Tidak ada data existing monitoring untuk disimpan', 'warning');
         }
@@ -1159,8 +1159,8 @@ document.addEventListener('DOMContentLoaded', async function() {
         // Setup auto-save setelah data dimuat
         setupAutoSave();
         
-        // Load dan tampilkan data monitoring terakhir
-        await loadAndDisplayLatestMonitoringData();
+        // Data monitoring terakhir tidak lagi ditampilkan di UI
+        // await loadAndDisplayLatestMonitoringData();
     } catch (error) {
         console.error('Error loading stored data:', error);
     }
@@ -1181,136 +1181,17 @@ async function loadAndDisplayLatestMonitoringData() {
     }
 }
 
-// Fungsi untuk menampilkan data monitoring terakhir
+// Fungsi untuk menampilkan data monitoring terakhir (DISABLED - Tabel disembunyikan)
 function displayLatestMonitoringData(latestData) {
-    const { data, latest_unit } = latestData;
+    // Tabel Data Monitoring Terakhir disembunyikan dari UI
+    // Data masih diambil dan diproses di background untuk keperluan lain
+    console.log('Data monitoring terakhir diambil:', latestData);
     
-    // Buat container untuk menampilkan data
-    let container = document.getElementById('latest-monitoring-container');
-    if (!container) {
-        container = document.createElement('div');
-        container.id = 'latest-monitoring-container';
-        container.className = 'latest-monitoring-container';
-        container.style.cssText = `
-            margin: 20px 0;
-            padding: 20px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            background-color: #f9f9f9;
-        `;
-        
-        // Cari tempat yang tepat untuk menampilkan data
-        const monitoringSection = document.querySelector('.monitoring-section') || 
-                                 document.querySelector('[id*="monitoring"]') || 
-                                 document.body;
-        monitoringSection.appendChild(container);
+    // Hapus container jika ada
+    const container = document.getElementById('latest-monitoring-container');
+    if (container) {
+        container.remove();
     }
     
-    // Buat header
-    const header = document.createElement('h3');
-    header.textContent = `Data Monitoring Terakhir - Nopol: ${latest_unit}`;
-    header.style.cssText = `
-        color: #333;
-        margin-bottom: 15px;
-        font-size: 18px;
-        font-weight: bold;
-    `;
-    
-    // Buat tabel untuk menampilkan data
-    const table = document.createElement('table');
-    table.style.cssText = `
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 10px;
-    `;
-    
-    // Header tabel
-    const thead = document.createElement('thead');
-    const headerRow = document.createElement('tr');
-    const headers = ['Tahun', 'Minggu', 'Komponen', 'Nilai', 'Catatan', 'Terakhir Update'];
-    
-    headers.forEach(headerText => {
-        const th = document.createElement('th');
-        th.textContent = headerText;
-        th.style.cssText = `
-            padding: 10px;
-            border: 1px solid #ddd;
-            background-color: #f0f0f0;
-            text-align: left;
-            font-weight: bold;
-        `;
-        headerRow.appendChild(th);
-    });
-    thead.appendChild(headerRow);
-    table.appendChild(thead);
-    
-    // Body tabel
-    const tbody = document.createElement('tbody');
-    
-    // Iterasi melalui data yang dikelompokkan
-    Object.keys(data).sort().forEach(year => {
-        Object.keys(data[year]).sort((a, b) => parseInt(a) - parseInt(b)).forEach(week => {
-            data[year][week].forEach(item => {
-                const row = document.createElement('tr');
-                
-                const yearCell = document.createElement('td');
-                yearCell.textContent = year;
-                yearCell.style.cssText = 'padding: 8px; border: 1px solid #ddd;';
-                
-                const weekCell = document.createElement('td');
-                weekCell.textContent = week;
-                weekCell.style.cssText = 'padding: 8px; border: 1px solid #ddd;';
-                
-                const componentCell = document.createElement('td');
-                componentCell.textContent = item.component;
-                componentCell.style.cssText = 'padding: 8px; border: 1px solid #ddd;';
-                
-                const valueCell = document.createElement('td');
-                valueCell.textContent = costModelAPI.formatNumberWithSeparator(item.value);
-                valueCell.style.cssText = 'padding: 8px; border: 1px solid #ddd; text-align: right;';
-                
-                const noteCell = document.createElement('td');
-                noteCell.textContent = item.note || '-';
-                noteCell.style.cssText = 'padding: 8px; border: 1px solid #ddd;';
-                
-                const updatedCell = document.createElement('td');
-                const updatedDate = new Date(item.updated_at);
-                updatedCell.textContent = updatedDate.toLocaleString('id-ID');
-                updatedCell.style.cssText = 'padding: 8px; border: 1px solid #ddd; font-size: 12px;';
-                
-                row.appendChild(yearCell);
-                row.appendChild(weekCell);
-                row.appendChild(componentCell);
-                row.appendChild(valueCell);
-                row.appendChild(noteCell);
-                row.appendChild(updatedCell);
-                
-                tbody.appendChild(row);
-            });
-        });
-    });
-    
-    table.appendChild(tbody);
-    
-    // Bersihkan container dan tambahkan konten baru
-    container.innerHTML = '';
-    container.appendChild(header);
-    container.appendChild(table);
-    
-    // Tambahkan tombol refresh
-    const refreshButton = document.createElement('button');
-    refreshButton.textContent = 'Refresh Data';
-    refreshButton.style.cssText = `
-        margin-top: 15px;
-        padding: 8px 16px;
-        background-color: #007bff;
-        color: white;
-        border: none;
-        border-radius: 4px;
-        cursor: pointer;
-    `;
-    refreshButton.onclick = loadAndDisplayLatestMonitoringData;
-    container.appendChild(refreshButton);
-    
-    console.log('Data monitoring terakhir berhasil ditampilkan');
+    console.log('Tabel Data Monitoring Terakhir disembunyikan dari UI');
 } 
