@@ -995,10 +995,10 @@
             const components = [
                 { label: 'Service Berkala/PM', sub: [] },
                 { label: 'Service General/GM', sub: [] },
-                { label: 'BBM', sub: ['Fuel Consumption', 'FC / Ritase', 'Solar Price'] },
-                { label: 'AdBlue', sub: ['AdBlue Consumption', 'AdBlue Price', 'AdBlue Consumption / Day'] },
-                { label: 'Driver Cost', sub: ['Day operation', 'Average Toll Cost', 'Driver', 'Driver Cost / Ritase'] },
-                { label: 'Ban', sub: ['Tire Price', 'Tyre / Unit', 'Cost / Unit', 'Lifetime Tyre', 'IDR / Km', 'IDR / Km / Unit', 'Cost Days'] },
+                { label: 'BBM', sub: [] },
+                { label: 'AdBlue', sub: [] },
+                { label: 'Driver Cost', sub: [] },
+                { label: 'Ban', sub: [] },
                 { label: 'Downtime (1%)', sub: [] } // Tetap ada, tapi tanpa input
             ];
 
@@ -1120,10 +1120,10 @@
             const components = [
                 { label: 'Service Berkala/PM', sub: [] },
                 { label: 'Service General/GM', sub: [] },
-                { label: 'BBM', sub: ['Fuel Consumption', 'FC / Ritase', 'Solar Price'] },
-                { label: 'AdBlue', sub: ['AdBlue Consumption', 'AdBlue Price', 'AdBlue Consumption / Day'] },
-                { label: 'Driver Cost', sub: ['Day operation', 'Average Toll Cost', 'Driver', 'Driver Cost / Ritase'] },
-                { label: 'Ban', sub: ['Tire Price', 'Tyre / Unit', 'Cost / Unit', 'Lifetime Tyre', 'IDR / Km', 'IDR / Km / Unit', 'Cost Days'] },
+                { label: 'BBM', sub: [] },
+                { label: 'AdBlue', sub: [] },
+                { label: 'Driver Cost', sub: [] },
+                { label: 'Ban', sub: [] },
                 { label: 'Downtime (1%)', sub: [] } // Tetap ada, tapi tanpa input
             ];
 
