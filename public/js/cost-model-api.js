@@ -1074,26 +1074,126 @@ window.calculateTCO = async function() {
         }
         
         // Show success message
-        alert('Data berhasil disimpan dan perhitungan selesai!');
+        // alert('Data berhasil disimpan dan perhitungan selesai!');
     } catch (error) {
-        console.error('Error saving data:', error);
-        alert('Terjadi kesalahan saat menyimpan data: ' + error.message);
+        // console.error('Error saving data:', error);
+        // alert('Terjadi kesalahan saat menyimpan data: ' + error.message);
     }
 };
 
 // Override monitoring functions untuk setup tombol submit (tanpa auto-save)
 const originalUpdateMonitoringTotals = window.updateMonitoringTotals;
 window.updateMonitoringTotals = async function(year) {
+    console.log('DEBUG - updateMonitoringTotals called with year:', year);
+    
     // Call original function first
     if (originalUpdateMonitoringTotals) {
+        console.log('DEBUG - Calling original updateMonitoringTotals');
         originalUpdateMonitoringTotals(year);
+    } else {
+        console.log('DEBUG - Original updateMonitoringTotals not found');
     }
     
     // Setup tombol submit setelah tabel dibuat
     setTimeout(() => {
         addMonitoringSubmitButtons();
     }, 100);
+    
+    // Force recalculation of totals and downtime
+    setTimeout(() => {
+        console.log('DEBUG - Forcing recalculation of totals and downtime');
+        forceRecalculateMonitoringTotals(year);
+    }, 200);
 };
+
+// Fungsi untuk memaksa perhitungan ulang total dan downtime
+function forceRecalculateMonitoringTotals(year) {
+    try {
+        console.log('DEBUG - forceRecalculateMonitoringTotals called for year:', year);
+        
+        // Cari dan trigger perhitungan total untuk setiap komponen
+        const components = ['Service_Berkala/PM', 'Service_General/GM', 'BBM', 'AdBlue', 'Driver_Cost', 'Ban'];
+        
+        components.forEach(component => {
+            // Trigger perhitungan total untuk setiap komponen
+            const totalElement = document.getElementById(`${component}_Total_${year}`);
+            if (totalElement) {
+                console.log('DEBUG - Found total element for', component, ':', totalElement.id);
+                // Trigger input event untuk memaksa perhitungan
+                const event = new Event('input', { bubbles: true });
+                totalElement.dispatchEvent(event);
+            } else {
+                console.log('DEBUG - Total element not found for', component, 'year', year);
+            }
+        });
+        
+        // Trigger perhitungan downtime
+        const downtimeElement = document.getElementById(`Downtime_${year}`);
+        if (downtimeElement) {
+            console.log('DEBUG - Found downtime element:', downtimeElement.id);
+            const event = new Event('input', { bubbles: true });
+            downtimeElement.dispatchEvent(event);
+        } else {
+            console.log('DEBUG - Downtime element not found for year', year);
+        }
+        
+        // Trigger perhitungan grand total
+        const grandTotalElement = document.getElementById(`Grand_Total_${year}`);
+        if (grandTotalElement) {
+            console.log('DEBUG - Found grand total element:', grandTotalElement.id);
+            const event = new Event('input', { bubbles: true });
+            grandTotalElement.dispatchEvent(event);
+        } else {
+            console.log('DEBUG - Grand total element not found for year', year);
+        }
+        
+            console.log('DEBUG - Force recalculation completed');
+    
+} catch (error) {
+    console.error('DEBUG - Error in forceRecalculateMonitoringTotals:', error);
+}
+}
+
+// Setup event listener untuk year selector monitoring
+function setupYearSelectorListeners() {
+    console.log('DEBUG - Setting up year selector listeners');
+    
+    // Monitor untuk year selector monitoring
+    const yearToMonitorElement = document.getElementById('yearToMonitor');
+    if (yearToMonitorElement) {
+        console.log('DEBUG - Found yearToMonitor element');
+        yearToMonitorElement.addEventListener('change', function() {
+            const year = parseInt(this.value || '1');
+            console.log('DEBUG - Year changed to:', year);
+            
+            // Force recalculation after year change
+            setTimeout(() => {
+                console.log('DEBUG - Force recalculation after year change');
+                forceRecalculateMonitoringTotals(year);
+            }, 500);
+        });
+    } else {
+        console.log('DEBUG - yearToMonitor element not found');
+    }
+    
+    // Monitor untuk existing year selector monitoring
+    const existingYearToMonitorElement = document.getElementById('existingYearToMonitor');
+    if (existingYearToMonitorElement) {
+        console.log('DEBUG - Found existingYearToMonitor element');
+        existingYearToMonitorElement.addEventListener('change', function() {
+            const year = parseInt(this.value || '1');
+            console.log('DEBUG - Existing year changed to:', year);
+            
+            // Force recalculation after year change
+            setTimeout(() => {
+                console.log('DEBUG - Force recalculation after existing year change');
+                forceRecalculateMonitoringTotals(year);
+            }, 500);
+        });
+    } else {
+        console.log('DEBUG - existingYearToMonitor element not found');
+    }
+}
 
 const originalUpdateExistingMonitoringTotals = window.updateExistingMonitoringTotals;
 window.updateExistingMonitoringTotals = async function(year) {
@@ -1111,9 +1211,14 @@ window.updateExistingMonitoringTotals = async function(year) {
 // Override updateMonitoringTable untuk setup tombol submit
 const originalUpdateMonitoringTable = window.updateMonitoringTable;
 window.updateMonitoringTable = async function() {
+    console.log('DEBUG - updateMonitoringTable called');
+    
     // Call original function first
     if (originalUpdateMonitoringTable) {
+        console.log('DEBUG - Calling original updateMonitoringTable');
         originalUpdateMonitoringTable();
+    } else {
+        console.log('DEBUG - Original updateMonitoringTable not found');
     }
     
     // Setup tombol submit untuk monitoring fields yang baru dibuat
@@ -1125,7 +1230,14 @@ window.updateMonitoringTable = async function() {
     const year = parseInt(document.getElementById('yearToMonitor')?.value || '1');
     const unitPoliceNumber = document.getElementById('unitPoliceNumber')?.value || '';
     
+    console.log('DEBUG - Loading monitoring data for year:', year, 'unit:', unitPoliceNumber);
     await costModelAPI.loadMonitoringData(year, unitPoliceNumber);
+    
+    // Force recalculation after data is loaded
+    setTimeout(() => {
+        console.log('DEBUG - Force recalculation after table update');
+        forceRecalculateMonitoringTotals(year);
+    }, 300);
 };
 
 // Override updateExistingMonitoringTable untuk setup tombol submit
@@ -1156,11 +1268,14 @@ document.addEventListener('DOMContentLoaded', async function() {
             costModelAPI.populateFormWithStoredData(storedData);
         }
         
-        // Setup auto-save setelah data dimuat
-        setupAutoSave();
-        
-        // Data monitoring terakhir tidak lagi ditampilkan di UI
-        // await loadAndDisplayLatestMonitoringData();
+            // Setup auto-save setelah data dimuat
+    setupAutoSave();
+    
+    // Setup event listener untuk year selector monitoring
+    setupYearSelectorListeners();
+    
+    // Data monitoring terakhir tidak lagi ditampilkan di UI
+    // await loadAndDisplayLatestMonitoringData();
     } catch (error) {
         console.error('Error loading stored data:', error);
     }

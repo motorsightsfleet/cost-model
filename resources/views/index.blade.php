@@ -591,7 +591,7 @@
             <h2>Monitoring</h2>
             <div class="form-group">
                 <label>Year to Monitor</label>
-                <select id="yearToMonitor" onchange="updateMonitoringTable(); loadMonitoringDataForYear()">
+                <select id="yearToMonitor" onchange="updateMonitoringTable(); loadMonitoringDataForYear(); updateMonitoringTotals(parseInt(this.value));">
                     <!-- Options will be dynamically populated -->
                 </select>
             </div>
@@ -610,7 +610,7 @@
             <h2>Existing Monitoring</h2>
             <div class="form-group">
                 <label>Year to Monitor</label>
-                <select id="existingYearToMonitor" onchange="updateExistingMonitoringTable(); loadExistingMonitoringDataForYear()">
+                <select id="existingYearToMonitor" onchange="updateExistingMonitoringTable(); loadExistingMonitoringDataForYear(); updateExistingMonitoringTotals(parseInt(this.value));">
                     <!-- Options will be dynamically populated -->
                 </select>
             </div>
@@ -1303,6 +1303,12 @@
                             const unitPoliceNumber = document.getElementById('unitPoliceNumber')?.value || '';
                             await costModelAPI.loadMonitoringData(year, unitPoliceNumber);
                             console.log('Monitoring data loaded successfully');
+                            
+                            // Update monitoring totals after data is loaded
+                            setTimeout(() => {
+                                updateMonitoringTotals(year);
+                                console.log('Monitoring totals updated after tab load');
+                            }, 200);
                         }
                     } catch (error) {
                         console.error('Error loading monitoring data:', error);
@@ -1317,6 +1323,12 @@
                             const unitPoliceNumber = document.getElementById('existingUnitPoliceNumber')?.value || '';
                             await costModelAPI.loadExistingMonitoringData(year, unitPoliceNumber);
                             console.log('Existing monitoring data loaded successfully');
+                            
+                            // Update existing monitoring totals after data is loaded
+                            setTimeout(() => {
+                                updateExistingMonitoringTotals(year);
+                                console.log('Existing monitoring totals updated after tab load');
+                            }, 200);
                         }
                     } catch (error) {
                         console.error('Error loading existing monitoring data:', error);
@@ -1480,6 +1492,12 @@
                     const unitPoliceNumber = document.getElementById('unitPoliceNumber')?.value || '';
                     await costModelAPI.loadMonitoringData(year, unitPoliceNumber);
                     console.log(`Monitoring data loaded for year ${year}`);
+                    
+                    // Update monitoring totals after data is loaded
+                    setTimeout(() => {
+                        updateMonitoringTotals(year);
+                        console.log(`Monitoring totals updated for year ${year}`);
+                    }, 200);
                 }
             } catch (error) {
                 console.error('Error loading monitoring data for year:', error);
@@ -1509,6 +1527,12 @@
                     const unitPoliceNumber = document.getElementById('existingUnitPoliceNumber')?.value || '';
                     await costModelAPI.loadExistingMonitoringData(year, unitPoliceNumber);
                     console.log(`Existing monitoring data loaded for year ${year}`);
+                    
+                    // Update existing monitoring totals after data is loaded
+                    setTimeout(() => {
+                        updateExistingMonitoringTotals(year);
+                        console.log(`Existing monitoring totals updated for year ${year}`);
+                    }, 200);
                 }
             } catch (error) {
                 console.error('Error loading existing monitoring data for year:', error);
