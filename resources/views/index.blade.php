@@ -308,6 +308,61 @@
                 transform: translateX(0);
             }
         }
+
+        /* Modal styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.4);
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 0;
+            border: 1px solid #888;
+            width: 90%;
+            max-width: 1200px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            animation: slideDown 0.3s ease;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .close {
+            color: #aaa;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: color 0.3s ease;
+        }
+
+        .close:hover,
+        .close:focus {
+            color: #000;
+        }
     </style>
 </head>
 <body>
@@ -315,11 +370,9 @@
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h1>Cost Model Calculator</h1>
             <div style="display: flex; gap: 10px;">
-                <a href="/police-units" style="text-decoration: none;">
-                    <button type="button" style="background: #28a745; padding: 8px 16px; border-radius: 6px; color: white; border: none; cursor: pointer; font-size: 14px;">
-                        <i class="fas fa-car"></i> Master Nomor Polisi
-                    </button>
-                </a>
+                <button id="masterPoliceUnitBtn" type="button" onclick="openPoliceUnitsModal()" style="background: #0e45cf; padding: 8px 16px; border-radius: 6px; color: white; border: none; cursor: pointer; font-size: 14px; display: none;">
+                    <i class="fas fa-car"></i> Master Nomor Polisi
+                </button>
             </div>
         </div>
         <div class="tabs">
@@ -608,7 +661,7 @@
             <div class="form-group">
                 <label>Nomor Polisi Unit</label>
                 <select id="unitPoliceNumber" onchange="loadMonitoringDataForSelectedUnit();">
-                    <option value="">Pilih Nomor Polisi Unit</option>
+                    {{-- <option value="">Pilih Nomor Polisi Unit</option> --}}
                     <!-- Options will be dynamically populated -->
                 </select>
             </div>
@@ -630,7 +683,7 @@
             <div class="form-group">
                 <label>Nomor Polisi Unit</label>
                 <select id="existingUnitPoliceNumber" onchange="loadExistingMonitoringDataForSelectedUnit();">
-                    <option value="">Pilih Nomor Polisi Unit</option>
+                    {{-- <option value="">Pilih Nomor Polisi Unit</option> --}}
                     <!-- Options will be dynamically populated -->
                 </select>
             </div>
@@ -642,6 +695,87 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Master Nomor Polisi -->
+    <div id="policeUnitsModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header" style="padding: 20px; border-bottom: 1px solid #dee2e6; display: flex; justify-content: space-between; align-items: center;">
+                <h3 style="margin: 0; color: #333;">
+                    <i class="fas fa-car"></i> Master Nomor Polisi
+                </h3>
+                <span class="close" onclick="closePoliceUnitsModal()">&times;</span>
+            </div>
+            <div class="modal-body" style="padding: 20px;">
+                <!-- Form Tambah/Edit -->
+                <div class="form-container" style="background: #f8f9fa; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                    <h4 id="formTitle">Tambah Nomor Polisi Baru</h4>
+                    <form id="policeUnitForm">
+                        <input type="hidden" id="editId" name="id">
+                        <div style="margin-bottom: 15px;">
+                            <label for="policeNumber" style="display: block; font-weight: 600; margin-bottom: 5px;">Nomor Polisi *</label>
+                            <input type="text" id="policeNumber" name="police_number" required style="width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px;">
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <button type="submit" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+                                <i class="fas fa-save"></i> Simpan
+                            </button>
+                            <button type="button" onclick="resetPoliceUnitForm()" style="background: #6c757d; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+                                <i class="fas fa-undo"></i> Reset
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                <!-- Tabel Data -->
+                <div class="table-container" style="background: white; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">
+                    <div style="padding: 20px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                            <h5 style="margin: 0;">Daftar Nomor Polisi</h5>
+                            <button onclick="loadPoliceUnitsForModal()" style="background: #28a745; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">
+                                <i class="fas fa-sync-alt"></i> Refresh
+                            </button>
+                        </div>
+                        <div style="overflow-x: auto;">
+                            <table style="width: 100%; border-collapse: collapse; min-width: 800px;">
+                                <thead style="background-color: #007bff; color: white;">
+                                    <tr>
+                                        <th style="padding: 12px; text-align: left; border: 1px solid #dee2e6;">No</th>
+                                        <th style="padding: 12px; text-align: left; border: 1px solid #dee2e6;">Nomor Polisi</th>
+                                        <th style="padding: 12px; text-align: left; border: 1px solid #dee2e6;">Status</th>
+                                        <th style="padding: 12px; text-align: left; border: 1px solid #dee2e6;">Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="policeUnitsTable">
+                                    <tr>
+                                        <td colspan="7" style="text-align: center; padding: 20px;">Memuat data...</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Konfirmasi Hapus -->
+    <div id="deletePoliceUnitModal" class="modal">
+        <div class="modal-content" style="width: 400px; margin: 15% auto;">
+            {{-- <div class="modal-header" style="padding: 20px; border-bottom: 1px solid #dee2e6;">
+                <h5 style="margin: 0;">Konfirmasi Hapus</h5>
+                <span class="close" onclick="closeDeleteModal()">&times;</span>
+            </div> --}}
+            <div class="modal-body" style="padding: 20px;">
+                <p>Are you sure you want to delete a police number <strong id="deletePoliceNumber"></strong>?</p>
+                <p style="color: #dc3545;">This action will delete monitoring data.</p>
+            </div>
+            <div class="modal-footer" style="padding: 15px 20px; border-top: 1px solid #dee2e6; text-align: right;">
+                <button onclick="closeDeleteModal()" style="background: #6c757d; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; margin-right: 10px;">Cancel</button>
+                <button onclick="confirmDeletePoliceUnit()" style="background: #dc3545; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer;">Delete</button>
+            </div>
+        </div>
+    </div>
+
     <script src="{{ asset('js/cost-model-api.js') }}"></script>
     <script>
         // Fungsi untuk format input dengan separator ribuan
@@ -1349,6 +1483,16 @@
             if (tabElement) tabElement.classList.add('active');
             if (contentElement) contentElement.classList.add('active');
             
+            // Show/hide Master Nomor Polisi button based on active tab
+            const masterPoliceUnitBtn = document.getElementById('masterPoliceUnitBtn');
+            if (masterPoliceUnitBtn) {
+                if (tabId === 'monitoring') {
+                    masterPoliceUnitBtn.style.display = 'block';
+                } else {
+                    masterPoliceUnitBtn.style.display = 'none';
+                }
+            }
+            
             // Handle different tabs appropriately
             if (tabId === 'dashboard') {
                 // For dashboard, try to load from stored data first
@@ -1606,7 +1750,7 @@
                     const monitoringDropdown = document.getElementById('unitPoliceNumber');
                     if (monitoringDropdown) {
                         // Clear existing options except the first one
-                        monitoringDropdown.innerHTML = '<option value="">Pilih Nomor Polisi Unit</option>';
+                        monitoringDropdown.innerHTML = '';
                         
                         policeUnits.forEach(unit => {
                             const option = document.createElement('option');
@@ -1620,7 +1764,7 @@
                     const existingMonitoringDropdown = document.getElementById('existingUnitPoliceNumber');
                     if (existingMonitoringDropdown) {
                         // Clear existing options except the first one
-                        existingMonitoringDropdown.innerHTML = '<option value="">Pilih Nomor Polisi Unit</option>';
+                        existingMonitoringDropdown.innerHTML = '';
                         
                         policeUnits.forEach(unit => {
                             const option = document.createElement('option');
@@ -1747,6 +1891,12 @@
         // Initialize tables on load
         window.onload = function() {
             try {
+                // Hide Master Nomor Polisi button initially (only show on monitoring tab)
+                const masterPoliceUnitBtn = document.getElementById('masterPoliceUnitBtn');
+                if (masterPoliceUnitBtn) {
+                    masterPoliceUnitBtn.style.display = 'none';
+                }
+                
                 // Load dashboard data from database first
                 loadDashboardData();
                 
@@ -1793,6 +1943,236 @@
                 console.error('Error during initialization:', error);
             }
         };
+
+        // Police Units Modal Functions
+        let deletePoliceUnitId = null;
+
+        function openPoliceUnitsModal() {
+            document.getElementById('policeUnitsModal').style.display = 'block';
+            loadPoliceUnitsForModal();
+            // Reset form when opening modal
+            resetPoliceUnitForm();
+        }
+
+        function closePoliceUnitsModal() {
+            document.getElementById('policeUnitsModal').style.display = 'none';
+            resetPoliceUnitForm();
+        }
+
+        function closeDeleteModal() {
+            document.getElementById('deletePoliceUnitModal').style.display = 'none';
+            deletePoliceUnitId = null;
+        }
+
+        // Load police units for modal
+        async function loadPoliceUnitsForModal() {
+            try {
+                const response = await fetch('/api/cost-model/police-units');
+                const result = await response.json();
+                
+                if (result.success) {
+                    displayPoliceUnitsInModal(result.data);
+                } else {
+                    showAlert('Error: ' + result.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Error loading police units:', error);
+                showAlert('Terjadi kesalahan saat memuat data', 'danger');
+            }
+        }
+
+        // Display police units in modal table
+        function displayPoliceUnitsInModal(data) {
+            const tbody = document.getElementById('policeUnitsTable');
+            
+            if (data.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 20px;">Tidak ada data</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = data.map((unit, index) => `
+                <tr style="border-bottom: 1px solid #dee2e6;">
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">${index + 1}</td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;"><strong>${unit.police_number}</strong></td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">
+                        <span style="padding: 4px 8px; border-radius: 4px; font-size: 12px; ${unit.is_active ? 'background-color: #28a745; color: white;' : 'background-color: #dc3545; color: white;'}">
+                            ${unit.is_active ? 'Aktif' : 'Tidak Aktif'}
+                        </span>
+                    </td>
+                    <td style="padding: 12px; border: 1px solid #dee2e6;">
+                        <button onclick="editPoliceUnitInModal(${unit.id})" style="background: #ffc107; color: #212529; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer; margin-right: 5px;">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button onclick="deletePoliceUnitInModal(${unit.id}, '${unit.police_number}')" style="background: #dc3545; color: white; border: none; padding: 4px 8px; border-radius: 4px; cursor: pointer;">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        // Handle form submission for police unit
+        document.getElementById('policeUnitForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            savePoliceUnitInModal();
+        });
+
+        // Save police unit in modal
+        async function savePoliceUnitInModal() {
+            const form = document.getElementById('policeUnitForm');
+            const formData = new FormData(form);
+            const data = {};
+
+            // Hanya ambil data yang diperlukan
+            if (formData.get('police_number')) {
+                data.police_number = formData.get('police_number');
+            }
+            
+            if (formData.get('id')) {
+                data.id = formData.get('id');
+            }
+
+            try {
+                const response = await fetch('/api/cost-model/police-units', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert(result.message, 'success');
+                    resetPoliceUnitForm();
+                    loadPoliceUnitsForModal();
+                    // Reload dropdown data
+                    await loadPoliceUnitsForDropdown();
+                } else {
+                    showAlert('Error: ' + result.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Error saving police unit:', error);
+                showAlert('Terjadi kesalahan saat menyimpan data', 'danger');
+            }
+        }
+
+        // Edit police unit in modal
+        async function editPoliceUnitInModal(id) {
+            try {
+                const response = await fetch(`/api/cost-model/police-units`);
+                const result = await response.json();
+                
+                if (result.success) {
+                    const unit = result.data.find(u => u.id === id);
+                    if (unit) {
+                        document.getElementById('editId').value = unit.id;
+                        document.getElementById('policeNumber').value = unit.police_number;
+                        
+                        document.getElementById('formTitle').textContent = 'Edit Nomor Polisi';
+                        document.getElementById('policeNumber').focus();
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading police unit for edit:', error);
+                showAlert('Terjadi kesalahan saat memuat data untuk edit', 'danger');
+            }
+        }
+
+        // Delete police unit in modal
+        function deletePoliceUnitInModal(id, policeNumber) {
+            deletePoliceUnitId = id;
+            document.getElementById('deletePoliceNumber').textContent = policeNumber;
+            document.getElementById('deletePoliceUnitModal').style.display = 'block';
+        }
+
+        // Confirm delete police unit
+        async function confirmDeletePoliceUnit() {
+            if (!deletePoliceUnitId) return;
+
+            try {
+                const response = await fetch('/api/cost-model/police-units', {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content') || ''
+                    },
+                    body: JSON.stringify({ id: deletePoliceUnitId })
+                });
+
+                const result = await response.json();
+                
+                if (result.success) {
+                    showAlert(result.message, 'success');
+                    loadPoliceUnitsForModal();
+                    // Reload dropdown data
+                    await loadPoliceUnitsForDropdown();
+                } else {
+                    showAlert('Error: ' + result.message, 'danger');
+                }
+            } catch (error) {
+                console.error('Error deleting police unit:', error);
+                showAlert('Terjadi kesalahan saat menghapus data', 'danger');
+            } finally {
+                closeDeleteModal();
+            }
+        }
+
+        // Reset police unit form
+        function resetPoliceUnitForm() {
+            document.getElementById('policeUnitForm').reset();
+            document.getElementById('editId').value = '';
+            document.getElementById('formTitle').textContent = 'Tambah Nomor Polisi Baru';
+        }
+
+        // Show alert function
+        function showAlert(message, type) {
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px; background-color: ' + (type === 'success' ? '#d4edda' : '#f8d7da') + '; color: ' + (type === 'success' ? '#155724' : '#721c24') + '; padding: 12px 20px; border-radius: 4px; border: 1px solid ' + (type === 'success' ? '#c3e6cb' : '#f5c6cb') + ';';
+            alertDiv.innerHTML = `
+                ${message}
+                <button type="button" class="btn-close" onclick="this.parentElement.remove()" style="float: right; background: none; border: none; font-size: 20px; cursor: pointer;">&times;</button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 5000);
+        }
+
+        // Close modal when clicking outside
+        window.onclick = function(event) {
+            const policeUnitsModal = document.getElementById('policeUnitsModal');
+            const deleteModal = document.getElementById('deletePoliceUnitModal');
+            
+            if (event.target === policeUnitsModal) {
+                closePoliceUnitsModal();
+            }
+            if (event.target === deleteModal) {
+                closeDeleteModal();
+            }
+        }
+
+        // Add keyboard support for closing modals
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'Escape') {
+                const policeUnitsModal = document.getElementById('policeUnitsModal');
+                const deleteModal = document.getElementById('deletePoliceUnitModal');
+                
+                if (policeUnitsModal.style.display === 'block') {
+                    closePoliceUnitsModal();
+                }
+                if (deleteModal.style.display === 'block') {
+                    closeDeleteModal();
+                }
+            }
+        });
     </script>
 </body>
 </html>

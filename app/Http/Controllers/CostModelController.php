@@ -602,24 +602,41 @@ class CostModelController extends Controller
     public function savePoliceUnit(Request $request): JsonResponse
     {
         try {
-            $request->validate([
-                'police_number' => 'required|string|max:255|unique:police_units,police_number,' . ($request->id ?? ''),
+            // Prepare validation rules
+            $validationRules = [
+                'police_number' => 'required|string|max:255',
                 'unit_name' => 'nullable|string|max:255',
                 'unit_type' => 'nullable|string|max:255',
                 'description' => 'nullable|string',
-                'is_active' => 'boolean',
-            ]);
+            ];
 
-            $policeUnit = \App\Models\PoliceUnit::updateOrCreate(
-                ['id' => $request->id],
-                [
-                    'police_number' => $request->police_number,
-                    'unit_name' => $request->unit_name,
-                    'unit_type' => $request->unit_type,
-                    'description' => $request->description,
-                    'is_active' => $request->is_active ?? true,
-                ]
-            );
+            // Add unique validation for police_number
+            if ($request->id) {
+                $validationRules['police_number'] .= '|unique:police_units,police_number,' . $request->id;
+            } else {
+                $validationRules['police_number'] .= '|unique:police_units,police_number';
+            }
+
+            $request->validate($validationRules);
+
+            // Prepare data for saving
+            $data = [
+                'police_number' => $request->police_number,
+                'unit_name' => $request->unit_name ?? null,
+                'unit_type' => $request->unit_type ?? null,
+                'description' => $request->description ?? null,
+                'is_active' => $request->has('is_active') ? (bool) $request->is_active : true,
+            ];
+
+            // Use updateOrCreate or create based on whether id is provided
+            if ($request->id) {
+                $policeUnit = \App\Models\PoliceUnit::updateOrCreate(
+                    ['id' => $request->id],
+                    $data
+                );
+            } else {
+                $policeUnit = \App\Models\PoliceUnit::create($data);
+            }
 
             return response()->json([
                 'success' => true,
@@ -650,19 +667,29 @@ class CostModelController extends Controller
             
             // Cek apakah ada data monitoring yang terkait
             $hasMonitoringData = CostModelMonitoring::where('unit_police_number', $request->id)->exists();
+            $deletedMonitoringCount = 0;
             
             if ($hasMonitoringData) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Tidak dapat menghapus nomor polisi karena masih ada data monitoring yang terkait'
-                ], 400);
+                // Hapus semua data monitoring yang terkait
+                $deletedMonitoringCount = CostModelMonitoring::where('unit_police_number', $request->id)->delete();
+                
+                Log::info('Deleted monitoring data for police unit', [
+                    'police_unit_id' => $request->id,
+                    'deleted_count' => $deletedMonitoringCount
+                ]);
             }
 
+            // Hapus nomor polisi
             $policeUnit->delete();
+
+            $message = 'Data master nomor polisi berhasil dihapus';
+            if ($hasMonitoringData) {
+                $message .= ' beserta ' . $deletedMonitoringCount . ' data monitoring yang terkait';
+            }
 
             return response()->json([
                 'success' => true,
-                'message' => 'Data master nomor polisi berhasil dihapus'
+                'message' => $message
             ]);
 
         } catch (\Exception $e) {

@@ -521,29 +521,68 @@ class CostModelAPI {
         
         console.log('DEBUG - Loading monitoring data:', monitoringData);
         
-        // Populate monitoring table
-        monitoringData.forEach(item => {
-            // Skip metadata items (week = 0)
-            if (item.week === 0) {
-                return;
-            }
+        // Define all possible components
+        const components = [
+            'Service_Berkala/PM', 
+            'Service_General/GM', 
+            'BBM', 
+            'AdBlue', 
+            'Driver_Cost', 
+            'Ban'
+        ];
+        
+        const weeks = Array.from({ length: 52 }, (_, i) => `W${i + 1}`);
+        
+        // If no data found, initialize all components with 0 values
+        if (!monitoringData || monitoringData.length === 0) {
+            console.log('DEBUG - No monitoring data found, initializing with 0 values');
+            components.forEach(component => {
+                weeks.forEach(week => {
+                    const inputId = `${component}_${year}_${week}`;
+                    const element = document.getElementById(inputId);
+                    if (element) {
+                        element.value = '0.00';
+                        console.log('DEBUG - Initialized element:', inputId, 'with value: 0.00');
+                    }
+                });
+            });
+        } else {
+            // Populate monitoring table with existing data
+            monitoringData.forEach(item => {
+                // Skip metadata items (week = 0)
+                if (item.week === 0) {
+                    return;
+                }
+                
+                // Construct the correct input ID based on component and week
+                const inputId = `${item.component}_${item.year}_W${item.week}`;
+                const element = document.getElementById(inputId);
+                
+                console.log('DEBUG - Looking for element with ID:', inputId);
+                
+                if (element) {
+                    element.value = this.formatNumberWithSeparator(item.value);
+                    console.log('DEBUG - Populated element:', inputId, 'with value:', item.value);
+                } else {
+                    console.log('DEBUG - Element not found:', inputId);
+                }
+            });
             
-            // Construct the correct input ID based on component and week
-            const inputId = `${item.component}_${item.year}_W${item.week}`;
-            const element = document.getElementById(inputId);
-            
-            console.log('DEBUG - Looking for element with ID:', inputId);
-            
-            if (element) {
-                element.value = this.formatNumberWithSeparator(item.value);
-                console.log('DEBUG - Populated element:', inputId, 'with value:', item.value);
-            } else {
-                console.log('DEBUG - Element not found:', inputId);
-            }
-        });
+            // Fill missing components with 0 values
+            components.forEach(component => {
+                weeks.forEach(week => {
+                    const inputId = `${component}_${year}_${week}`;
+                    const element = document.getElementById(inputId);
+                    if (element && !element.value) {
+                        element.value = '0.00';
+                        console.log('DEBUG - Filled missing element:', inputId, 'with value: 0.00');
+                    }
+                });
+            });
+        }
         
         // Load metadata
-        const metadataItems = monitoringData.filter(item => item.week === 0);
+        const metadataItems = monitoringData ? monitoringData.filter(item => item.week === 0) : [];
         console.log('DEBUG - Metadata items found:', metadataItems);
         
         metadataItems.forEach(item => {
@@ -580,7 +619,7 @@ class CostModelAPI {
         });
         
         // If no metadata found, try to load from any monitoring data
-        if (metadataItems.length === 0 && monitoringData.length > 0) {
+        if (metadataItems.length === 0 && monitoringData && monitoringData.length > 0) {
             const firstItem = monitoringData[0];
             if (firstItem.unit_police_number) {
                 const element = document.getElementById('unitPoliceNumber');
@@ -595,7 +634,6 @@ class CostModelAPI {
                         }
                     }
                 } else if (element && element.tagName === 'INPUT') {
-                    // For input field (backward compatibility)
                     element.value = firstItem.unit_police_number;
                     console.log('DEBUG - Set unitPoliceNumber input to:', firstItem.unit_police_number);
                 }
@@ -629,102 +667,81 @@ class CostModelAPI {
         
         console.log('DEBUG - Loading existing monitoring data:', monitoringData);
         
-        // Populate existing monitoring table
-        monitoringData.forEach(item => {
-            // Skip metadata items (week = 0)
-            if (item.week === 0) {
-                return;
-            }
-            
-            // Only process existing monitoring items
-            if (item.component.startsWith('existing_')) {
-                // Remove 'existing_' prefix for ID construction
-                const componentWithoutPrefix = item.component.replace('existing_', '');
-                const inputId = `${componentWithoutPrefix}_existing_${item.year}_W${item.week}`;
-                const element = document.getElementById(inputId);
-                
-                console.log('DEBUG - Looking for existing element with ID:', inputId);
-                
-                if (element) {
-                    element.value = this.formatNumberWithSeparator(item.value);
-                    console.log('DEBUG - Populated existing element:', inputId, 'with value:', item.value);
-                } else {
-                    console.log('DEBUG - Existing element not found:', inputId);
-                }
-            } else {
-                // Process regular monitoring items (non-existing)
-                const inputId = `${item.component}_${item.year}_W${item.week}`;
-                const element = document.getElementById(inputId);
-                
-                console.log('DEBUG - Looking for regular element with ID:', inputId);
-                
-                if (element) {
-                    element.value = this.formatNumberWithSeparator(item.value);
-                    console.log('DEBUG - Populated regular element:', inputId, 'with value:', item.value);
-                } else {
-                    console.log('DEBUG - Regular element not found:', inputId);
-                }
-            }
-        });
+        // Define all possible components for existing monitoring
+        const components = [
+            'Service_Berkala/PM', 
+            'Service_General/GM', 
+            'BBM', 
+            'AdBlue', 
+            'Driver_Cost', 
+            'Ban'
+        ];
         
-        // Load metadata for existing monitoring
-        const metadataItems = monitoringData.filter(item => item.week === 0);
-        console.log('DEBUG - Existing metadata items found:', metadataItems);
+        const weeks = Array.from({ length: 52 }, (_, i) => `W${i + 1}`);
         
-        metadataItems.forEach(item => {
-            console.log('DEBUG - Processing existing metadata item:', item);
-            
-            if (item.component === 'existing_unit_police_number') {
-                const element = document.getElementById('existingUnitPoliceNumber');
-                if (element && element.tagName === 'SELECT') {
-                    // For dropdown, find the option with matching police_number
-                    const options = element.options;
-                    for (let i = 0; i < options.length; i++) {
-                        if (options[i].textContent === item.value) {
-                            element.value = options[i].value; // Set to id
-                            console.log('DEBUG - Set existingUnitPoliceNumber dropdown to id:', options[i].value);
-                            break;
-                        }
+        // If no data found, initialize all components with 0 values
+        if (!monitoringData || monitoringData.length === 0) {
+            console.log('DEBUG - No existing monitoring data found, initializing with 0 values');
+            components.forEach(component => {
+                weeks.forEach(week => {
+                    const inputId = `${component}_existing_${year}_${week}`;
+                    const element = document.getElementById(inputId);
+                    if (element) {
+                        element.value = '0.00';
+                        console.log('DEBUG - Initialized existing element:', inputId, 'with value: 0.00');
                     }
-                } else if (element && element.tagName === 'INPUT') {
-                    // For input field (backward compatibility)
-                    element.value = item.value;
-                    console.log('DEBUG - Set existingUnitPoliceNumber input to:', item.value);
-                } else {
-                    console.log('DEBUG - existingUnitPoliceNumber element not found');
+                });
+            });
+        } else {
+            // Populate existing monitoring table with existing data
+            monitoringData.forEach(item => {
+                // Skip metadata items (week = 0)
+                if (item.week === 0) {
+                    return;
                 }
-            } else if (item.component === 'existing_selected_year') {
-                const element = document.getElementById('existingYearToMonitor');
-                if (element) {
-                    element.value = item.value;
-                    console.log('DEBUG - Set existingYearToMonitor to:', item.value);
-                } else {
-                    console.log('DEBUG - existingYearToMonitor element not found');
-                }
-            }
-        });
-        
-        // If no metadata found, try to load from any existing monitoring data
-        if (metadataItems.length === 0 && monitoringData.length > 0) {
-            const firstItem = monitoringData[0];
-            if (firstItem.unit_police_number) {
-                const element = document.getElementById('existingUnitPoliceNumber');
-                if (element && element.tagName === 'SELECT') {
-                    // For dropdown, find the option with matching police_number
-                    const options = element.options;
-                    for (let i = 0; i < options.length; i++) {
-                        if (options[i].textContent === firstItem.unit_police_number) {
-                            element.value = options[i].value; // Set to id
-                            console.log('DEBUG - Set existingUnitPoliceNumber dropdown to id:', options[i].value);
-                            break;
-                        }
+                
+                // Only process existing monitoring items
+                if (item.component.startsWith('existing_')) {
+                    // Remove 'existing_' prefix for ID construction
+                    const componentWithoutPrefix = item.component.replace('existing_', '');
+                    const inputId = `${componentWithoutPrefix}_existing_${item.year}_W${item.week}`;
+                    const element = document.getElementById(inputId);
+                    
+                    console.log('DEBUG - Looking for existing element with ID:', inputId);
+                    
+                    if (element) {
+                        element.value = this.formatNumberWithSeparator(item.value);
+                        console.log('DEBUG - Populated existing element:', inputId, 'with value:', item.value);
+                    } else {
+                        console.log('DEBUG - Existing element not found:', inputId);
                     }
-                } else if (element && element.tagName === 'INPUT') {
-                    // For input field (backward compatibility)
-                    element.value = firstItem.unit_police_number;
-                    console.log('DEBUG - Set existingUnitPoliceNumber input to:', firstItem.unit_police_number);
+                } else {
+                    // Process regular monitoring items (non-existing)
+                    const inputId = `${item.component}_${item.year}_W${item.week}`;
+                    const element = document.getElementById(inputId);
+                    
+                    console.log('DEBUG - Looking for regular element with ID:', inputId);
+                    
+                    if (element) {
+                        element.value = this.formatNumberWithSeparator(item.value);
+                        console.log('DEBUG - Populated regular element:', inputId, 'with value:', item.value);
+                    } else {
+                        console.log('DEBUG - Regular element not found:', inputId);
+                    }
                 }
-            }
+            });
+            
+            // Fill missing components with 0 values
+            components.forEach(component => {
+                weeks.forEach(week => {
+                    const inputId = `${component}_existing_${year}_${week}`;
+                    const element = document.getElementById(inputId);
+                    if (element && !element.value) {
+                        element.value = '0.00';
+                        console.log('DEBUG - Filled missing existing element:', inputId, 'with value: 0.00');
+                    }
+                });
+            });
         }
     }
 }
