@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cost Model API Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin-bottom: 30px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        .test-section h3 {
+            margin-top: 0;
+            color: #333;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .result {
+            margin-top: 10px;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-family: monospace;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .error {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+        }
+    </style>
+</head>
+<body>
+    <h1>Cost Model API Test</h1>
+    
+    <div class="test-section">
+        <h3>Test Store All Data</h3>
+        <p>Mengirim semua data dari form ke API</p>
+        <button onclick="testStoreAllData()">Test Store All Data</button>
+        <div id="store-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Get All Data</h3>
+        <p>Mengambil semua data dari database</p>
+        <button onclick="testGetAllData()">Test Get All Data</button>
+        <div id="get-result" class="result"></div>
+    </div>
+
+    <div class="test-section">
+        <h3>Test Store Monitoring Data</h3>
+        <p>Menyimpan data monitoring</p>
+        <button onclick="testStoreMonitoringData()">Test Store Monitoring Data</button>
+        <div id="monitoring-result" class="result"></div>
+    </div>
+
+    <script>
+        const baseURL = '/api/cost-model';
+        const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+
+        async function testStoreAllData() {
+            const resultDiv = document.getElementById('store-result');
+            resultDiv.innerHTML = 'Testing...';
+            resultDiv.className = 'result';
+
+            try {
+                // Sample data untuk testing
+                const testData = {
+                    // Settings - Actual
+                    units_price: 500000000,
+                    qty_units: 10,
+                    net_book_value: 5,
+                    solar_price: 15000,
+                    adblue_price: 25000,
+                    
+                    // Settings - Assumption
+                    retase_per_day: 3,
+                    avg_ritase_per_day: 150.5,
+                    fuel_consumption: 8.5,
+                    adblue_consumption: 1000,
+                    day_operation: 25,
+                    
+                    // Expenses - Actual
+                    insurance_unit: 5000000,
+                    first_payment: 150000000,
+                    leasing_payment: 15000000,
+                    vehicle_tax: 2000000,
+                    kir: 500000,
+                    telematics_one_time_cost: 5000000,
+                    telematics_recurring_cost: 500000,
+                    tire_price: 2000000,
+                    lifetime_tyre: 50000,
+                    oil_price: 50000,
+                    
+                    // PM Costs (10 tahun)
+                    pm_year_1: 5000000,
+                    pm_year_2: 3000000,
+                    pm_year_3: 4000000,
+                    pm_year_4: 3500000,
+                    pm_year_5: 3000000,
+                    pm_year_6: 3500000,
+                    pm_year_7: 4000000,
+                    pm_year_8: 4500000,
+                    pm_year_9: 5000000,
+                    pm_year_10: 5500000,
+                    
+                    // GM Costs (10 tahun)
+                    gm_year_1: 2000000,
+                    gm_year_2: 2500000,
+                    gm_year_3: 3000000,
+                    gm_year_4: 3500000,
+                    gm_year_5: 4000000,
+                    gm_year_6: 4500000,
+                    gm_year_7: 5000000,
+                    gm_year_8: 5500000,
+                    gm_year_9: 6000000,
+                    gm_year_10: 6500000,
+                    
+                    // Expenses - Assumption
+                    toll_cost: 50000,
+                    driver_per_unit: 2,
+                    driver_cost: 100000,
+                    tyre_per_unit: 6,
+                    downtime_percentage: 5.5,
+                };
+
+                const response = await fetch(`${baseURL}/store-all`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    resultDiv.innerHTML = 'SUCCESS:\n' + JSON.stringify(result, null, 2);
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.innerHTML = 'ERROR:\n' + JSON.stringify(result, null, 2);
+                    resultDiv.className = 'result error';
+                }
+
+            } catch (error) {
+                resultDiv.innerHTML = 'ERROR:\n' + error.message;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testGetAllData() {
+            const resultDiv = document.getElementById('get-result');
+            resultDiv.innerHTML = 'Testing...';
+            resultDiv.className = 'result';
+
+            try {
+                const response = await fetch(`${baseURL}/all-data`, {
+                    method: 'GET',
+                    headers: {
+                        'Accept': 'application/json',
+                    }
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    resultDiv.innerHTML = 'SUCCESS:\n' + JSON.stringify(result, null, 2);
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.innerHTML = 'ERROR:\n' + JSON.stringify(result, null, 2);
+                    resultDiv.className = 'result error';
+                }
+
+            } catch (error) {
+                resultDiv.innerHTML = 'ERROR:\n' + error.message;
+                resultDiv.className = 'result error';
+            }
+        }
+
+        async function testStoreMonitoringData() {
+            const resultDiv = document.getElementById('monitoring-result');
+            resultDiv.innerHTML = 'Testing...';
+            resultDiv.className = 'result';
+
+            try {
+                const testData = {
+                    unit_police_number: 'B 1234 AB',
+                    year: 1,
+                    week: 1,
+                    component: 'Service_PM',
+                    value: 5000000,
+                    note: 'Test monitoring data'
+                };
+
+                const response = await fetch(`${baseURL}/monitoring-data`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': csrfToken,
+                        'Accept': 'application/json',
+                    },
+                    body: JSON.stringify(testData)
+                });
+
+                const result = await response.json();
+
+                if (result.success) {
+                    resultDiv.innerHTML = 'SUCCESS:\n' + JSON.stringify(result, null, 2);
+                    resultDiv.className = 'result success';
+                } else {
+                    resultDiv.innerHTML = 'ERROR:\n' + JSON.stringify(result, null, 2);
+                    resultDiv.className = 'result error';
+                }
+
+            } catch (error) {
+                resultDiv.innerHTML = 'ERROR:\n' + error.message;
+                resultDiv.className = 'result error';
+            }
+        }
+    </script>
+</body>
+</html> 
