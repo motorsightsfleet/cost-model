@@ -1239,13 +1239,87 @@
             }
         }
 
-        function showNote(id) {
-            const input = document.getElementById(id);
-            const currentValue = input ? input.value || '0.00' : 'N/A';
-            const note = prompt(`Enter note for ${id} (Current value: ${currentValue} IDR):`, '');
-            if (note) {
-                alert(`Note saved for ${id}: ${note}`);
-                // Here you can implement storage (e.g., localStorage) if needed
+        async function showNote(id) {
+            try {
+                // Parse ID untuk mendapatkan informasi komponen
+                const idParts = id.split('_');
+                let component, year, week;
+                
+                // Cek apakah ini existing monitoring atau regular monitoring
+                const isExisting = id.includes('_existing_');
+                
+                if (isExisting) {
+                    // Format: Component_existing_year_week
+                    const existingIndex = idParts.indexOf('existing');
+                    component = idParts.slice(0, existingIndex).join('_');
+                    year = parseInt(idParts[existingIndex + 1]);
+                    week = parseInt(idParts[existingIndex + 2].replace('W', ''));
+                } else {
+                    // Format: Component_year_week
+                    const lastTwoParts = idParts.slice(-2);
+                    year = parseInt(lastTwoParts[0]);
+                    week = parseInt(lastTwoParts[1].replace('W', ''));
+                    component = idParts.slice(0, -2).join('_');
+                }
+                
+                // Ambil unit police number
+                const unitPoliceNumber = isExisting 
+                    ? document.getElementById('existingUnitPoliceNumber')?.value || ''
+                    : document.getElementById('unitPoliceNumber')?.value || '';
+                
+                console.log('DEBUG - Parsed ID:', {
+                    id: id,
+                    isExisting: isExisting,
+                    component: component,
+                    year: year,
+                    week: week,
+                    unitPoliceNumber: unitPoliceNumber
+                });
+                
+                if (!unitPoliceNumber) {
+                    alert('Mohon isi Nomor Polisi Unit terlebih dahulu!');
+                    return;
+                }
+                
+                // Ambil note yang sudah ada
+                let existingNote = '';
+                if (typeof costModelAPI !== 'undefined') {
+                    try {
+                        const noteData = await costModelAPI.getMonitoringNote(unitPoliceNumber, year, week, component);
+                        existingNote = noteData?.note || '';
+                    } catch (error) {
+                        console.error('Error getting existing note:', error);
+                    }
+                }
+                
+                // Tampilkan popup untuk input note
+                const input = document.getElementById(id);
+                const currentValue = input ? input.value || '0.00' : 'N/A';
+                const note = prompt(
+                    `Enter note for ${id}\nCurrent value: ${currentValue} IDR\n\nNote:`,
+                    existingNote
+                );
+                
+                if (note !== null) { // User tidak klik Cancel
+                    if (typeof costModelAPI !== 'undefined') {
+                        console.log('DEBUG - Saving note with data:', {
+                            unitPoliceNumber: unitPoliceNumber,
+                            year: year,
+                            week: week,
+                            component: component,
+                            note: note
+                        });
+                        
+                        await costModelAPI.saveMonitoringNote(unitPoliceNumber, year, week, component, note);
+                        alert(`Note berhasil disimpan untuk ${id}: ${note}`);
+                    } else {
+                        alert('Error: costModelAPI tidak tersedia');
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Error in showNote:', error);
+                alert('Terjadi kesalahan saat menyimpan note: ' + error.message);
             }
         }
 

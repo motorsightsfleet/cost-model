@@ -738,4 +738,138 @@ class CostModelController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * Menyimpan note untuk monitoring data
+     */
+    public function saveMonitoringNote(Request $request): JsonResponse
+    {
+        try {
+            // Validasi input
+            $request->validate([
+                'unit_police_number' => 'required|string|max:255',
+                'year' => 'required|integer|min:1',
+                'week' => 'required|integer|min:1|max:52',
+                'component' => 'required|string|max:255',
+                'note' => 'nullable|string|max:1000',
+            ]);
+
+            $unitPoliceNumber = $request->unit_police_number;
+            $year = $request->year;
+            $week = $request->week;
+            $component = $request->component;
+            $note = $request->note;
+
+            Log::info('Saving monitoring note', [
+                'unit_police_number' => $unitPoliceNumber,
+                'year' => $year,
+                'week' => $week,
+                'component' => $component,
+                'note' => $note
+            ]);
+
+            // Cari record monitoring yang sudah ada
+            $monitoring = CostModelMonitoring::where([
+                'unit_police_number' => $unitPoliceNumber,
+                'year' => $year,
+                'week' => $week,
+                'component' => $component
+            ])->first();
+
+            if ($monitoring) {
+                // Update note pada record yang sudah ada
+                $monitoring->update(['note' => $note]);
+                Log::info('Monitoring note updated', ['id' => $monitoring->id]);
+            } else {
+                // Buat record baru dengan note
+                $monitoring = CostModelMonitoring::create([
+                    'unit_police_number' => $unitPoliceNumber,
+                    'year' => $year,
+                    'week' => $week,
+                    'component' => $component,
+                    'value' => 0, // Default value
+                    'note' => $note
+                ]);
+                Log::info('New monitoring record created with note', ['id' => $monitoring->id]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Note berhasil disimpan',
+                'data' => [
+                    'id' => $monitoring->id,
+                    'note' => $monitoring->note
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error saving monitoring note', [
+                'error' => $e->getMessage(),
+                'request' => $request->all()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Mengambil note untuk monitoring data
+     */
+    public function getMonitoringNote(Request $request): JsonResponse
+    {
+        try {
+            // Validasi input
+            $request->validate([
+                'unit_police_number' => 'required|string|max:255',
+                'year' => 'required|integer|min:1',
+                'week' => 'required|integer|min:1|max:52',
+                'component' => 'required|string|max:255',
+            ]);
+
+            $unitPoliceNumber = $request->unit_police_number;
+            $year = $request->year;
+            $week = $request->week;
+            $component = $request->component;
+
+            // Cari record monitoring
+            $monitoring = CostModelMonitoring::where([
+                'unit_police_number' => $unitPoliceNumber,
+                'year' => $year,
+                'week' => $week,
+                'component' => $component
+            ])->first();
+
+            if (!$monitoring) {
+                return response()->json([
+                    'success' => true,
+                    'message' => 'Note tidak ditemukan',
+                    'data' => [
+                        'note' => null
+                    ]
+                ]);
+            }
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Note berhasil diambil',
+                'data' => [
+                    'note' => $monitoring->note
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error getting monitoring note', [
+                'error' => $e->getMessage(),
+                'request' => $request->all()
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
 }

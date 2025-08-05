@@ -33,4 +33,8 @@ Route::prefix('api/cost-model')->group(function () {
     
     // API untuk dashboard data
     Route::get('/dashboard-data', [CostModelController::class, 'getDashboardData'])->name('api.cost-model.dashboard-data');
+    
+    // API untuk monitoring notes
+    Route::post('/save-monitoring-note', [CostModelController::class, 'saveMonitoringNote'])->name('api.cost-model.save-monitoring-note');
+    Route::get('/get-monitoring-note', [CostModelController::class, 'getMonitoringNote'])->name('api.cost-model.get-monitoring-note');
 });

@@ -231,6 +231,64 @@ class CostModelAPI {
         }
     }
 
+    // Menyimpan note untuk monitoring data
+    async saveMonitoringNote(unitPoliceNumber, year, week, component, note) {
+        try {
+            const response = await fetch(`${this.baseURL}/save-monitoring-note`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': this.csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    unit_police_number: unitPoliceNumber,
+                    year: year,
+                    week: week,
+                    component: component,
+                    note: note
+                })
+            });
+
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('Monitoring note berhasil disimpan:', data.message);
+                return data.data;
+            } else {
+                throw new Error(data.message);
+            }
+        } catch (error) {
+            console.error('Error saving monitoring note:', error);
+            throw error;
+        }
+    }
+
+    // Mengambil note untuk monitoring data
+    async getMonitoringNote(unitPoliceNumber, year, week, component) {
+        try {
+            const params = new URLSearchParams({
+                unit_police_number: unitPoliceNumber,
+                year: year,
+                week: week,
+                component: component
+            });
+
+            const response = await fetch(`${this.baseURL}/get-monitoring-note?${params}`);
+            const data = await response.json();
+            
+            if (data.success) {
+                console.log('Monitoring note berhasil diambil:', data.message);
+                return data.data;
+            } else {
+                throw new Error(data.message);
+            }
+        } catch (error) {
+            console.error('Error getting monitoring note:', error);
+            return null;
+        }
+    }
+
     // Mengumpulkan semua data dari form
     collectFormData() {
         const formData = {};
