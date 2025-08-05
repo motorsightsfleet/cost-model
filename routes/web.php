@@ -10,6 +10,11 @@ Route::get('/', function () {
 // Cost Model Calculator Routes
 Route::get('/cost-model', [CostModelController::class, 'index'])->name('cost-model.index');
 
+// Master Nomor Polisi Routes
+Route::get('/police-units', function () {
+    return view('police-units');
+})->name('police-units.index');
+
 // Test API Route
 Route::get('/test-api', function () {
     return view('test-api');
@@ -27,6 +32,11 @@ Route::prefix('api/cost-model')->group(function () {
     Route::get('/monitoring-data', [CostModelController::class, 'getMonitoringData'])->name('api.cost-model.monitoring-data');
     Route::get('/latest-monitoring-data', [CostModelController::class, 'getLatestMonitoringData'])->name('api.cost-model.latest-monitoring-data');
     Route::get('/all-unit-police-numbers', [CostModelController::class, 'getAllUnitPoliceNumbers'])->name('api.cost-model.all-unit-police-numbers');
+    
+    // API untuk master nomor polisi
+    Route::get('/police-units', [CostModelController::class, 'getAllPoliceUnits'])->name('api.cost-model.police-units');
+    Route::post('/police-units', [CostModelController::class, 'savePoliceUnit'])->name('api.cost-model.save-police-unit');
+    Route::delete('/police-units', [CostModelController::class, 'deletePoliceUnit'])->name('api.cost-model.delete-police-unit');
     
     // API untuk perhitungan
     Route::post('/calculate', [CostModelController::class, 'calculate'])->name('api.cost-model.calculate');

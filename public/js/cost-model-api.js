@@ -451,10 +451,11 @@ class CostModelAPI {
 
     // Menyimpan data monitoring dari tabel
     async saveMonitoringData(year, week, component, value, note = '') {
-        const unitPoliceNumber = document.getElementById('unitPoliceNumber')?.value || '';
+        const unitPoliceNumberElement = document.getElementById('unitPoliceNumber');
+        const unitPoliceNumber = unitPoliceNumberElement?.value || '';
         
         const monitoringData = {
-            unit_police_number: unitPoliceNumber,
+            unit_police_number: unitPoliceNumber, // This is now the id
             year: year,
             week: week,
             component: component,
@@ -473,10 +474,11 @@ class CostModelAPI {
 
     // Menyimpan data existing monitoring dari tabel
     async saveExistingMonitoringData(year, week, component, value, note = '') {
-        const unitPoliceNumber = document.getElementById('existingUnitPoliceNumber')?.value || '';
+        const unitPoliceNumberElement = document.getElementById('existingUnitPoliceNumber');
+        const unitPoliceNumber = unitPoliceNumberElement?.value || '';
         
         const monitoringData = {
-            unit_police_number: unitPoliceNumber,
+            unit_police_number: unitPoliceNumber, // This is now the id
             year: year,
             week: week,
             component: component,
@@ -500,7 +502,19 @@ class CostModelAPI {
         };
         
         if (unitPoliceNumber) {
-            filters.unit_police_number = unitPoliceNumber;
+            // If unitPoliceNumber is an id (integer), we need to get the police_number first
+            if (typeof unitPoliceNumber === 'string' && unitPoliceNumber.match(/^\d+$/)) {
+                // It's an id, we need to get the police_number from the dropdown
+                const dropdown = document.getElementById('unitPoliceNumber');
+                if (dropdown) {
+                    const selectedOption = dropdown.options[dropdown.selectedIndex];
+                    if (selectedOption) {
+                        filters.unit_police_number = selectedOption.textContent; // Use the text content (police_number)
+                    }
+                }
+            } else {
+                filters.unit_police_number = unitPoliceNumber;
+            }
         }
 
         const monitoringData = await this.getMonitoringData(filters);
@@ -537,9 +551,20 @@ class CostModelAPI {
             
             if (item.component === 'unit_police_number') {
                 const element = document.getElementById('unitPoliceNumber');
-                if (element) {
+                if (element && element.tagName === 'SELECT') {
+                    // For dropdown, we need to find the option with matching police_number
+                    const options = element.options;
+                    for (let i = 0; i < options.length; i++) {
+                        if (options[i].textContent === item.value) {
+                            element.value = options[i].value; // Set to id
+                            console.log('DEBUG - Set unitPoliceNumber dropdown to id:', options[i].value);
+                            break;
+                        }
+                    }
+                } else if (element && element.tagName === 'INPUT') {
+                    // For input field (backward compatibility)
                     element.value = item.value;
-                    console.log('DEBUG - Set unitPoliceNumber to:', item.value);
+                    console.log('DEBUG - Set unitPoliceNumber input to:', item.value);
                 } else {
                     console.log('DEBUG - unitPoliceNumber element not found');
                 }
@@ -559,9 +584,20 @@ class CostModelAPI {
             const firstItem = monitoringData[0];
             if (firstItem.unit_police_number) {
                 const element = document.getElementById('unitPoliceNumber');
-                if (element) {
+                if (element && element.tagName === 'SELECT') {
+                    // For dropdown, find the option with matching police_number
+                    const options = element.options;
+                    for (let i = 0; i < options.length; i++) {
+                        if (options[i].textContent === firstItem.unit_police_number) {
+                            element.value = options[i].value; // Set to id
+                            console.log('DEBUG - Set unitPoliceNumber dropdown to id:', options[i].value);
+                            break;
+                        }
+                    }
+                } else if (element && element.tagName === 'INPUT') {
+                    // For input field (backward compatibility)
                     element.value = firstItem.unit_police_number;
-                    console.log('DEBUG - Set unitPoliceNumber from first item:', firstItem.unit_police_number);
+                    console.log('DEBUG - Set unitPoliceNumber input to:', firstItem.unit_police_number);
                 }
             }
         }
@@ -574,7 +610,19 @@ class CostModelAPI {
         };
         
         if (unitPoliceNumber) {
-            filters.unit_police_number = unitPoliceNumber;
+            // If unitPoliceNumber is an id (integer), we need to get the police_number first
+            if (typeof unitPoliceNumber === 'string' && unitPoliceNumber.match(/^\d+$/)) {
+                // It's an id, we need to get the police_number from the dropdown
+                const dropdown = document.getElementById('existingUnitPoliceNumber');
+                if (dropdown) {
+                    const selectedOption = dropdown.options[dropdown.selectedIndex];
+                    if (selectedOption) {
+                        filters.unit_police_number = selectedOption.textContent; // Use the text content (police_number)
+                    }
+                }
+            } else {
+                filters.unit_police_number = unitPoliceNumber;
+            }
         }
 
         const monitoringData = await this.getMonitoringData(filters);
@@ -628,9 +676,20 @@ class CostModelAPI {
             
             if (item.component === 'existing_unit_police_number') {
                 const element = document.getElementById('existingUnitPoliceNumber');
-                if (element) {
+                if (element && element.tagName === 'SELECT') {
+                    // For dropdown, find the option with matching police_number
+                    const options = element.options;
+                    for (let i = 0; i < options.length; i++) {
+                        if (options[i].textContent === item.value) {
+                            element.value = options[i].value; // Set to id
+                            console.log('DEBUG - Set existingUnitPoliceNumber dropdown to id:', options[i].value);
+                            break;
+                        }
+                    }
+                } else if (element && element.tagName === 'INPUT') {
+                    // For input field (backward compatibility)
                     element.value = item.value;
-                    console.log('DEBUG - Set existingUnitPoliceNumber to:', item.value);
+                    console.log('DEBUG - Set existingUnitPoliceNumber input to:', item.value);
                 } else {
                     console.log('DEBUG - existingUnitPoliceNumber element not found');
                 }
@@ -650,9 +709,20 @@ class CostModelAPI {
             const firstItem = monitoringData[0];
             if (firstItem.unit_police_number) {
                 const element = document.getElementById('existingUnitPoliceNumber');
-                if (element) {
+                if (element && element.tagName === 'SELECT') {
+                    // For dropdown, find the option with matching police_number
+                    const options = element.options;
+                    for (let i = 0; i < options.length; i++) {
+                        if (options[i].textContent === firstItem.unit_police_number) {
+                            element.value = options[i].value; // Set to id
+                            console.log('DEBUG - Set existingUnitPoliceNumber dropdown to id:', options[i].value);
+                            break;
+                        }
+                    }
+                } else if (element && element.tagName === 'INPUT') {
+                    // For input field (backward compatibility)
                     element.value = firstItem.unit_police_number;
-                    console.log('DEBUG - Set existingUnitPoliceNumber from first item:', firstItem.unit_police_number);
+                    console.log('DEBUG - Set existingUnitPoliceNumber input to:', firstItem.unit_police_number);
                 }
             }
         }

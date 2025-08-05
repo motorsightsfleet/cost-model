@@ -209,7 +209,7 @@ class CostModelController extends Controller
     {
         try {
             $request->validate([
-                'unit_police_number' => 'nullable|string',
+                'unit_police_number' => 'nullable',
                 'year' => 'required|integer|min:1|max:10',
                 'week' => 'required|integer|min:0|max:52', // Allow week = 0 for metadata
                 'component' => 'required|string',
@@ -217,9 +217,39 @@ class CostModelController extends Controller
                 'note' => 'nullable|string',
             ]);
 
+            // Handle unit_police_number - it can be either id (integer) or police_number (string)
+            $policeUnitId = null;
+            if ($request->unit_police_number) {
+                // Check if it's an integer (id) or string (police_number)
+                if (is_numeric($request->unit_police_number)) {
+                    // It's an id, validate it exists
+                    $policeUnit = \App\Models\PoliceUnit::find($request->unit_police_number);
+                    if (!$policeUnit) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Police unit dengan ID ' . $request->unit_police_number . ' tidak ditemukan'
+                        ], 404);
+                    }
+                    $policeUnitId = $policeUnit->id;
+                } else {
+                    // It's a police_number string, find or create
+                    $policeUnit = \App\Models\PoliceUnit::firstOrCreate(
+                        ['police_number' => $request->unit_police_number],
+                        [
+                            'unit_name' => 'Unit ' . $request->unit_police_number,
+                            'unit_type' => 'Kendaraan',
+                            'description' => 'Unit dengan nomor polisi ' . $request->unit_police_number,
+                            'is_active' => true,
+                        ]
+                    );
+                    $policeUnitId = $policeUnit->id;
+                }
+            }
+
             // Log data yang akan disimpan
             Log::info('Upserting monitoring data:', [
                 'unit_police_number' => $request->unit_police_number,
+                'police_unit_id' => $policeUnitId,
                 'year' => $request->year,
                 'week' => $request->week,
                 'component' => $request->component,
@@ -229,7 +259,7 @@ class CostModelController extends Controller
 
             // Cek apakah data sudah ada
             $existingRecord = CostModelMonitoring::where([
-                'unit_police_number' => $request->unit_police_number,
+                'unit_police_number' => $policeUnitId,
                 'year' => $request->year,
                 'week' => $request->week,
                 'component' => $request->component,
@@ -244,7 +274,7 @@ class CostModelController extends Controller
             // Upsert monitoring data
             $monitoring = CostModelMonitoring::updateOrCreate(
                 [
-                    'unit_police_number' => $request->unit_police_number,
+                    'unit_police_number' => $policeUnitId,
                     'year' => $request->year,
                     'week' => $request->week,
                     'component' => $request->component,
@@ -279,7 +309,7 @@ class CostModelController extends Controller
     {
         try {
             $request->validate([
-                'unit_police_number' => 'nullable|string',
+                'unit_police_number' => 'nullable',
                 'year' => 'required|integer|min:1|max:10',
                 'week' => 'required|integer|min:0|max:52', // Allow week = 0 for metadata
                 'component' => 'required|string',
@@ -287,9 +317,39 @@ class CostModelController extends Controller
                 'note' => 'nullable|string',
             ]);
 
+            // Handle unit_police_number - it can be either id (integer) or police_number (string)
+            $policeUnitId = null;
+            if ($request->unit_police_number) {
+                // Check if it's an integer (id) or string (police_number)
+                if (is_numeric($request->unit_police_number)) {
+                    // It's an id, validate it exists
+                    $policeUnit = \App\Models\PoliceUnit::find($request->unit_police_number);
+                    if (!$policeUnit) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Police unit dengan ID ' . $request->unit_police_number . ' tidak ditemukan'
+                        ], 404);
+                    }
+                    $policeUnitId = $policeUnit->id;
+                } else {
+                    // It's a police_number string, find or create
+                    $policeUnit = \App\Models\PoliceUnit::firstOrCreate(
+                        ['police_number' => $request->unit_police_number],
+                        [
+                            'unit_name' => 'Unit ' . $request->unit_police_number,
+                            'unit_type' => 'Kendaraan',
+                            'description' => 'Unit dengan nomor polisi ' . $request->unit_police_number,
+                            'is_active' => true,
+                        ]
+                    );
+                    $policeUnitId = $policeUnit->id;
+                }
+            }
+
             // Log data yang akan disimpan
             Log::info('Upserting existing monitoring data:', [
                 'unit_police_number' => $request->unit_police_number,
+                'police_unit_id' => $policeUnitId,
                 'year' => $request->year,
                 'week' => $request->week,
                 'component' => 'existing_' . $request->component,
@@ -299,7 +359,7 @@ class CostModelController extends Controller
 
             // Cek apakah data sudah ada
             $existingRecord = CostModelMonitoring::where([
-                'unit_police_number' => $request->unit_police_number,
+                'unit_police_number' => $policeUnitId,
                 'year' => $request->year,
                 'week' => $request->week,
                 'component' => 'existing_' . $request->component,
@@ -314,7 +374,7 @@ class CostModelController extends Controller
             // Upsert existing monitoring data dengan prefix 'existing_'
             $monitoring = CostModelMonitoring::updateOrCreate(
                 [
-                    'unit_police_number' => $request->unit_police_number,
+                    'unit_police_number' => $policeUnitId,
                     'year' => $request->year,
                     'week' => $request->week,
                     'component' => 'existing_' . $request->component,
@@ -348,29 +408,49 @@ class CostModelController extends Controller
     public function getMonitoringData(Request $request): JsonResponse
     {
         try {
-            $query = CostModelMonitoring::query();
+            $query = CostModelMonitoring::withPoliceUnit();
 
             if ($request->has('unit_police_number') && $request->unit_police_number) {
-                $query->where('unit_police_number', $request->unit_police_number);
+                $query->where('police_units.police_number', $request->unit_police_number);
             }
 
             if ($request->has('year') && $request->year) {
-                $query->where('year', $request->year);
+                $query->where('cost_model_monitoring.year', $request->year);
             }
 
             if ($request->has('week') && $request->week) {
-                $query->where('week', $request->week);
+                $query->where('cost_model_monitoring.week', $request->week);
             }
 
             if ($request->has('component') && $request->component) {
-                $query->where('component', $request->component);
+                $query->where('cost_model_monitoring.component', $request->component);
             }
 
             $monitoring = $query->get();
 
+            // Transform data untuk memastikan police_number tersedia
+            $transformedData = $monitoring->map(function ($item) {
+                return [
+                    'id' => $item->id,
+                    'unit_police_number' => $item->police_number, // Ambil dari JOIN
+                    'year' => $item->year,
+                    'week' => $item->week,
+                    'component' => $item->component,
+                    'value' => $item->value,
+                    'note' => $item->note,
+                    'created_at' => $item->created_at,
+                    'updated_at' => $item->updated_at,
+                    'police_unit_info' => [
+                        'police_number' => $item->police_number,
+                        'unit_name' => $item->unit_name,
+                        'unit_type' => $item->unit_type,
+                    ]
+                ];
+            });
+
             return response()->json([
                 'success' => true,
-                'data' => $monitoring
+                'data' => $transformedData
             ]);
 
         } catch (\Exception $e) {
@@ -388,10 +468,9 @@ class CostModelController extends Controller
     {
         try {
             // Ambil nopol terakhir yang diinputkan (berdasarkan updated_at terbaru)
-            $latestUnit = CostModelMonitoring::select('unit_police_number')
-                ->whereNotNull('unit_police_number')
-                ->where('unit_police_number', '!=', '')
-                ->orderBy('updated_at', 'desc')
+            $latestUnit = CostModelMonitoring::withPoliceUnit()
+                ->whereNotNull('cost_model_monitoring.unit_police_number')
+                ->orderBy('cost_model_monitoring.updated_at', 'desc')
                 ->first();
 
             if (!$latestUnit) {
@@ -403,13 +482,14 @@ class CostModelController extends Controller
                 ]);
             }
 
-            $latestUnitNumber = $latestUnit->unit_police_number;
+            $latestUnitNumber = $latestUnit->police_number;
 
             // Ambil semua data monitoring untuk nopol terakhir
-            $monitoringData = CostModelMonitoring::where('unit_police_number', $latestUnitNumber)
-                ->orderBy('year', 'asc')
-                ->orderBy('week', 'asc')
-                ->orderBy('component', 'asc')
+            $monitoringData = CostModelMonitoring::withPoliceUnit()
+                ->where('police_units.police_number', $latestUnitNumber)
+                ->orderBy('cost_model_monitoring.year', 'asc')
+                ->orderBy('cost_model_monitoring.week', 'asc')
+                ->orderBy('cost_model_monitoring.component', 'asc')
                 ->get();
 
             // Kelompokkan data berdasarkan tahun dan minggu
@@ -431,6 +511,12 @@ class CostModelController extends Controller
                     'component' => $data->component,
                     'value' => $data->value,
                     'note' => $data->note,
+                    'unit_police_number' => $data->police_number, // Ambil dari JOIN
+                    'police_unit_info' => [
+                        'police_number' => $data->police_number,
+                        'unit_name' => $data->unit_name,
+                        'unit_type' => $data->unit_type,
+                    ],
                     'created_at' => $data->created_at,
                     'updated_at' => $data->updated_at
                 ];
@@ -453,26 +539,134 @@ class CostModelController extends Controller
     }
 
     /**
-     * Mengambil daftar semua nopol yang pernah diinputkan
+     * Mengambil daftar semua nomor polisi unit
      */
-    public function getAllUnitPoliceNumbers(Request $request): JsonResponse
+    public function getAllUnitPoliceNumbers(): JsonResponse
     {
         try {
-            $units = CostModelMonitoring::select('unit_police_number')
-                ->whereNotNull('unit_police_number')
-                ->where('unit_police_number', '!=', '')
-                ->distinct()
-                ->orderBy('unit_police_number', 'asc')
-                ->pluck('unit_police_number');
+            // Ambil dari tabel master police_units
+            $policeUnits = \App\Models\PoliceUnit::active()
+                ->select('id', 'police_number', 'unit_name', 'unit_type')
+                ->orderBy('police_number', 'asc')
+                ->get();
+
+            $policeNumbers = $policeUnits->map(function ($unit) {
+                return [
+                    'id' => $unit->id,
+                    'police_number' => $unit->police_number,
+                    'unit_name' => $unit->unit_name,
+                    'unit_type' => $unit->unit_type,
+                ];
+            });
+
+            return response()->json([
+                'success' => true,
+                'data' => $policeNumbers,
+                'message' => 'Daftar nomor polisi berhasil diambil'
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Mengambil semua data master PoliceUnit
+     */
+    public function getAllPoliceUnits(Request $request): JsonResponse
+    {
+        try {
+            $units = \App\Models\PoliceUnit::orderBy('police_number', 'asc')->get();
 
             return response()->json([
                 'success' => true,
                 'data' => $units,
-                'message' => 'Daftar nopol berhasil diambil'
+                'message' => 'Data master nomor polisi berhasil diambil'
             ]);
 
         } catch (\Exception $e) {
-            Log::error('Error in getAllUnitPoliceNumbers:', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            Log::error('Error in getAllPoliceUnits:', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Menyimpan data master PoliceUnit
+     */
+    public function savePoliceUnit(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'police_number' => 'required|string|max:255|unique:police_units,police_number,' . ($request->id ?? ''),
+                'unit_name' => 'nullable|string|max:255',
+                'unit_type' => 'nullable|string|max:255',
+                'description' => 'nullable|string',
+                'is_active' => 'boolean',
+            ]);
+
+            $policeUnit = \App\Models\PoliceUnit::updateOrCreate(
+                ['id' => $request->id],
+                [
+                    'police_number' => $request->police_number,
+                    'unit_name' => $request->unit_name,
+                    'unit_type' => $request->unit_type,
+                    'description' => $request->description,
+                    'is_active' => $request->is_active ?? true,
+                ]
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data master nomor polisi berhasil disimpan',
+                'data' => $policeUnit
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in savePoliceUnit:', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
+            return response()->json([
+                'success' => false,
+                'message' => 'Terjadi kesalahan: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Menghapus data master PoliceUnit
+     */
+    public function deletePoliceUnit(Request $request): JsonResponse
+    {
+        try {
+            $request->validate([
+                'id' => 'required|integer|exists:police_units,id',
+            ]);
+
+            $policeUnit = \App\Models\PoliceUnit::find($request->id);
+            
+            // Cek apakah ada data monitoring yang terkait
+            $hasMonitoringData = CostModelMonitoring::where('unit_police_number', $request->id)->exists();
+            
+            if ($hasMonitoringData) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tidak dapat menghapus nomor polisi karena masih ada data monitoring yang terkait'
+                ], 400);
+            }
+
+            $policeUnit->delete();
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Data master nomor polisi berhasil dihapus'
+            ]);
+
+        } catch (\Exception $e) {
+            Log::error('Error in deletePoliceUnit:', ['error' => $e->getMessage(), 'trace' => $e->getTraceAsString()]);
             return response()->json([
                 'success' => false,
                 'message' => 'Terjadi kesalahan: ' . $e->getMessage()
@@ -747,7 +941,7 @@ class CostModelController extends Controller
         try {
             // Validasi input
             $request->validate([
-                'unit_police_number' => 'required|string|max:255',
+                'unit_police_number' => 'required',
                 'year' => 'required|integer|min:1',
                 'week' => 'required|integer|min:1|max:52',
                 'component' => 'required|string|max:255',
@@ -760,8 +954,38 @@ class CostModelController extends Controller
             $component = $request->component;
             $note = $request->note;
 
+            // Handle unit_police_number - it can be either id (integer) or police_number (string)
+            $policeUnitId = null;
+            if ($unitPoliceNumber) {
+                // Check if it's an integer (id) or string (police_number)
+                if (is_numeric($unitPoliceNumber)) {
+                    // It's an id, validate it exists
+                    $policeUnit = \App\Models\PoliceUnit::find($unitPoliceNumber);
+                    if (!$policeUnit) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Police unit dengan ID ' . $unitPoliceNumber . ' tidak ditemukan'
+                        ], 404);
+                    }
+                    $policeUnitId = $policeUnit->id;
+                } else {
+                    // It's a police_number string, find or create
+                    $policeUnit = \App\Models\PoliceUnit::firstOrCreate(
+                        ['police_number' => $unitPoliceNumber],
+                        [
+                            'unit_name' => 'Unit ' . $unitPoliceNumber,
+                            'unit_type' => 'Kendaraan',
+                            'description' => 'Unit dengan nomor polisi ' . $unitPoliceNumber,
+                            'is_active' => true,
+                        ]
+                    );
+                    $policeUnitId = $policeUnit->id;
+                }
+            }
+
             Log::info('Saving monitoring note', [
                 'unit_police_number' => $unitPoliceNumber,
+                'police_unit_id' => $policeUnitId,
                 'year' => $year,
                 'week' => $week,
                 'component' => $component,
@@ -770,7 +994,7 @@ class CostModelController extends Controller
 
             // Cari record monitoring yang sudah ada
             $monitoring = CostModelMonitoring::where([
-                'unit_police_number' => $unitPoliceNumber,
+                'unit_police_number' => $policeUnitId,
                 'year' => $year,
                 'week' => $week,
                 'component' => $component
@@ -783,7 +1007,7 @@ class CostModelController extends Controller
             } else {
                 // Buat record baru dengan note
                 $monitoring = CostModelMonitoring::create([
-                    'unit_police_number' => $unitPoliceNumber,
+                    'unit_police_number' => $policeUnitId,
                     'year' => $year,
                     'week' => $week,
                     'component' => $component,
@@ -823,7 +1047,7 @@ class CostModelController extends Controller
         try {
             // Validasi input
             $request->validate([
-                'unit_police_number' => 'required|string|max:255',
+                'unit_police_number' => 'required',
                 'year' => 'required|integer|min:1',
                 'week' => 'required|integer|min:1|max:52',
                 'component' => 'required|string|max:255',
@@ -834,9 +1058,38 @@ class CostModelController extends Controller
             $week = $request->week;
             $component = $request->component;
 
+            // Handle unit_police_number - it can be either id (integer) or police_number (string)
+            $policeUnitId = null;
+            if ($unitPoliceNumber) {
+                // Check if it's an integer (id) or string (police_number)
+                if (is_numeric($unitPoliceNumber)) {
+                    // It's an id, validate it exists
+                    $policeUnit = \App\Models\PoliceUnit::find($unitPoliceNumber);
+                    if (!$policeUnit) {
+                        return response()->json([
+                            'success' => false,
+                            'message' => 'Police unit dengan ID ' . $unitPoliceNumber . ' tidak ditemukan'
+                        ], 404);
+                    }
+                    $policeUnitId = $policeUnit->id;
+                } else {
+                    // It's a police_number string, find or create
+                    $policeUnit = \App\Models\PoliceUnit::firstOrCreate(
+                        ['police_number' => $unitPoliceNumber],
+                        [
+                            'unit_name' => 'Unit ' . $unitPoliceNumber,
+                            'unit_type' => 'Kendaraan',
+                            'description' => 'Unit dengan nomor polisi ' . $unitPoliceNumber,
+                            'is_active' => true,
+                        ]
+                    );
+                    $policeUnitId = $policeUnit->id;
+                }
+            }
+
             // Cari record monitoring
             $monitoring = CostModelMonitoring::where([
-                'unit_police_number' => $unitPoliceNumber,
+                'unit_police_number' => $policeUnitId,
                 'year' => $year,
                 'week' => $week,
                 'component' => $component

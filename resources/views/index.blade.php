@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Cost Model Calculator</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
         * {
             box-sizing: border-box;
@@ -311,7 +312,16 @@
 </head>
 <body>
     <div class="container">
-        <h1>Cost Model Calculator</h1>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+            <h1>Cost Model Calculator</h1>
+            <div style="display: flex; gap: 10px;">
+                <a href="/police-units" style="text-decoration: none;">
+                    <button type="button" style="background: #28a745; padding: 8px 16px; border-radius: 6px; color: white; border: none; cursor: pointer; font-size: 14px;">
+                        <i class="fas fa-car"></i> Master Nomor Polisi
+                    </button>
+                </a>
+            </div>
+        </div>
         <div class="tabs">
             <div class="tab active" onclick="showTab('settings')">Settings</div>
             <div class="tab" onclick="showTab('expense')">Expense</div>
@@ -597,7 +607,10 @@
             </div>
             <div class="form-group">
                 <label>Nomor Polisi Unit</label>
-                <input type="text" id="unitPoliceNumber" placeholder="e.g., B 1234 AB">
+                <select id="unitPoliceNumber" onchange="loadMonitoringDataForSelectedUnit();">
+                    <option value="">Pilih Nomor Polisi Unit</option>
+                    <!-- Options will be dynamically populated -->
+                </select>
             </div>
             <div class="monitoring-table-container">
                 <table class="monitoring-table" id="monitoring-table">
@@ -616,7 +629,10 @@
             </div>
             <div class="form-group">
                 <label>Nomor Polisi Unit</label>
-                <input type="text" id="existingUnitPoliceNumber" placeholder="e.g., B 1234 AB">
+                <select id="existingUnitPoliceNumber" onchange="loadExistingMonitoringDataForSelectedUnit();">
+                    <option value="">Pilih Nomor Polisi Unit</option>
+                    <!-- Options will be dynamically populated -->
+                </select>
             </div>
             <div class="monitoring-table-container">
                 <table class="monitoring-table" id="existing-monitoring-table">
@@ -1563,7 +1579,8 @@
             try {
                 if (typeof costModelAPI !== 'undefined') {
                     const year = parseInt(document.getElementById('yearToMonitor')?.value || '1');
-                    const unitPoliceNumber = document.getElementById('unitPoliceNumber')?.value || '';
+                    const unitPoliceNumberElement = document.getElementById('unitPoliceNumber');
+                    const unitPoliceNumber = unitPoliceNumberElement?.value || '';
                     await costModelAPI.loadMonitoringData(year, unitPoliceNumber);
                     console.log(`Monitoring data loaded for year ${year}`);
                     
@@ -1578,13 +1595,110 @@
             }
         }
 
+        // Load police units data untuk dropdown
+        async function loadPoliceUnitsForDropdown() {
+            try {
+                if (typeof costModelAPI !== 'undefined') {
+                    const policeUnits = await costModelAPI.getAllUnitPoliceNumbers();
+                    console.log('Police units loaded for dropdown:', policeUnits);
+                    
+                    // Populate monitoring dropdown
+                    const monitoringDropdown = document.getElementById('unitPoliceNumber');
+                    if (monitoringDropdown) {
+                        // Clear existing options except the first one
+                        monitoringDropdown.innerHTML = '<option value="">Pilih Nomor Polisi Unit</option>';
+                        
+                        policeUnits.forEach(unit => {
+                            const option = document.createElement('option');
+                            option.value = unit.id; // Use id as value
+                            option.textContent = `${unit.police_number}`;
+                            monitoringDropdown.appendChild(option);
+                        });
+                    }
+                    
+                    // Populate existing monitoring dropdown
+                    const existingMonitoringDropdown = document.getElementById('existingUnitPoliceNumber');
+                    if (existingMonitoringDropdown) {
+                        // Clear existing options except the first one
+                        existingMonitoringDropdown.innerHTML = '<option value="">Pilih Nomor Polisi Unit</option>';
+                        
+                        policeUnits.forEach(unit => {
+                            const option = document.createElement('option');
+                            option.value = unit.id; // Use id as value
+                            option.textContent = `${unit.police_number}`;
+                            existingMonitoringDropdown.appendChild(option);
+                        });
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading police units for dropdown:', error);
+            }
+        }
+
+        // Load monitoring data for selected unit
+        async function loadMonitoringDataForSelectedUnit() {
+            try {
+                const unitPoliceNumberElement = document.getElementById('unitPoliceNumber');
+                const unitPoliceNumber = unitPoliceNumberElement?.value || '';
+                const year = parseInt(document.getElementById('yearToMonitor')?.value || '1');
+                
+                if (unitPoliceNumber) {
+                    await costModelAPI.loadMonitoringData(year, unitPoliceNumber);
+                    console.log(`Monitoring data loaded for unit ${unitPoliceNumber} and year ${year}`);
+                    
+                    // Update monitoring totals after data is loaded
+                    setTimeout(() => {
+                        updateMonitoringTotals(year);
+                        console.log(`Monitoring totals updated for year ${year}`);
+                    }, 200);
+                } else {
+                    // Clear monitoring table if no unit selected
+                    const tableBody = document.getElementById('monitoring-table-body');
+                    if (tableBody) {
+                        tableBody.innerHTML = '';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading monitoring data for selected unit:', error);
+            }
+        }
+
+        // Load existing monitoring data for selected unit
+        async function loadExistingMonitoringDataForSelectedUnit() {
+            try {
+                const unitPoliceNumberElement = document.getElementById('existingUnitPoliceNumber');
+                const unitPoliceNumber = unitPoliceNumberElement?.value || '';
+                const year = parseInt(document.getElementById('existingYearToMonitor')?.value || '1');
+                
+                if (unitPoliceNumber) {
+                    await costModelAPI.loadExistingMonitoringData(year, unitPoliceNumber);
+                    console.log(`Existing monitoring data loaded for unit ${unitPoliceNumber} and year ${year}`);
+                    
+                    // Update existing monitoring totals after data is loaded
+                    setTimeout(() => {
+                        updateExistingMonitoringTotals(year);
+                        console.log(`Existing monitoring totals updated for year ${year}`);
+                    }, 200);
+                } else {
+                    // Clear existing monitoring table if no unit selected
+                    const tableBody = document.getElementById('existing-monitoring-table-body');
+                    if (tableBody) {
+                        tableBody.innerHTML = '';
+                    }
+                }
+            } catch (error) {
+                console.error('Error loading existing monitoring data for selected unit:', error);
+            }
+        }
+
         // Load monitoring metadata (unit police number) for all years
         async function loadMonitoringMetadata() {
             try {
                 if (typeof costModelAPI !== 'undefined') {
                     // Try to load metadata from year 1 first
                     const year = 1;
-                    const unitPoliceNumber = '';
+                    const unitPoliceNumberElement = document.getElementById('unitPoliceNumber');
+                    const unitPoliceNumber = unitPoliceNumberElement?.value || '';
                     await costModelAPI.loadMonitoringData(year, unitPoliceNumber);
                     console.log('Monitoring metadata loaded');
                 }
@@ -1598,7 +1712,8 @@
             try {
                 if (typeof costModelAPI !== 'undefined') {
                     const year = parseInt(document.getElementById('existingYearToMonitor')?.value || '1');
-                    const unitPoliceNumber = document.getElementById('existingUnitPoliceNumber')?.value || '';
+                    const unitPoliceNumberElement = document.getElementById('existingUnitPoliceNumber');
+                    const unitPoliceNumber = unitPoliceNumberElement?.value || '';
                     await costModelAPI.loadExistingMonitoringData(year, unitPoliceNumber);
                     console.log(`Existing monitoring data loaded for year ${year}`);
                     
@@ -1619,7 +1734,8 @@
                 if (typeof costModelAPI !== 'undefined') {
                     // Try to load metadata from year 1 first
                     const year = 1;
-                    const unitPoliceNumber = '';
+                    const unitPoliceNumberElement = document.getElementById('existingUnitPoliceNumber');
+                    const unitPoliceNumber = unitPoliceNumberElement?.value || '';
                     await costModelAPI.loadExistingMonitoringData(year, unitPoliceNumber);
                     console.log('Existing monitoring metadata loaded');
                 }
@@ -1640,8 +1756,9 @@
                 updateMonitoringTable();
                 updateExistingMonitoringTable();
                 
-                // Load monitoring metadata (unit police number)
+                // Load police units data untuk dropdown
                 setTimeout(async () => {
+                    await loadPoliceUnitsForDropdown();
                     await loadMonitoringMetadata();
                     await loadExistingMonitoringMetadata();
                 }, 200);
@@ -1659,50 +1776,19 @@
                             autoSaveInput(this.id, 'form');
                         }
                     });
-                    input.addEventListener('change', function() {
-                        if (typeof autoSaveInput === 'function') {
-                            autoSaveInput(this.id, 'form');
-                        }
-                    });
                 });
                 
-                // Setup event listeners untuk select fields
-                const selectInputs = document.querySelectorAll('select');
-                selectInputs.forEach(select => {
-                    select.addEventListener('change', function() {
-                        if (typeof autoSaveInput === 'function') {
-                            autoSaveInput(this.id, 'form');
-                        }
-                    });
-                });
-                
-                // Setup event listener untuk tombol Calculate
-                const calculateBtn = document.getElementById('calculateBtn');
-                if (calculateBtn) {
-                    calculateBtn.addEventListener('click', function(e) {
-                        e.preventDefault();
-                        console.log('Calculate button clicked - running calculation...');
-                        calculateTCO();
-                    });
+                // Setup monitoring auto-save
+                if (typeof setupMonitoringAutoSave === 'function') {
+                    setupMonitoringAutoSave();
                 }
                 
-                // Check if we should run calculation based on active tab
-                const activeTab = document.querySelector('.tab.active');
-                if (activeTab && activeTab.textContent.includes('Dashboard')) {
-                    // For dashboard tab, try to load from stored data first
-                    setTimeout(async () => {
-                        try {
-                            if (typeof costModelAPI !== 'undefined') {
-                                const dashboardData = await costModelAPI.getDashboardData();
-                                if (dashboardData && dashboardData.dashboard_data) {
-                                    populateDashboardFromStoredData(dashboardData.dashboard_data);
-                                }
-                            }
-                        } catch (error) {
-                            console.error('Error loading dashboard data on page load:', error);
-                        }
-                    }, 100);
+                // Setup year selector listeners
+                if (typeof setupYearSelectorListeners === 'function') {
+                    setupYearSelectorListeners();
                 }
+                
+                console.log('Initialization completed');
             } catch (error) {
                 console.error('Error during initialization:', error);
             }
