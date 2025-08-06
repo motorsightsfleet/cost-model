@@ -8,6 +8,51 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <style>
+        /* Navbar Styles */
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .navbar-brand {
+            color: #fff;
+            font-size: 24px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        
+        .navbar-brand i {
+            margin-right: 10px;
+        }
+        
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            color: #fff;
+        }
+        
+        .navbar-user span {
+            margin-right: 15px;
+        }
+        
+        .navbar-user a {
+            color: #fff;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-user a:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
         .table-container {
             background: white;
             border-radius: 8px;
@@ -33,16 +78,33 @@
     </style>
 </head>
 <body class="bg-light">
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="{{ route('cost-model.index') }}" class="navbar-brand">
+            <i class="fas fa-calculator"></i> Cost Model Calculator
+        </a>
+        <div class="navbar-user">
+            <span>Selamat datang, {{ Auth::user()->name }}!</span>
+            <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </nav>
+
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+        @csrf
+    </form>
+
     <div class="container-fluid mt-4">
         <div class="row">
             <div class="col-12">
                 <div class="d-flex justify-content-between align-items-center mb-4">
                     <h2><i class="fas fa-car"></i> Master Nomor Polisi</h2>
                     <div>
-                        <a href="/" class="btn btn-secondary me-2">
+                        <a href="{{ route('cost-model.index') }}" class="btn btn-secondary me-2">
                             <i class="fas fa-home"></i> Beranda
                         </a>
-                        <a href="/cost-model" class="btn btn-primary">
+                        <a href="{{ route('cost-model.index') }}" class="btn btn-primary">
                             <i class="fas fa-calculator"></i> Cost Model
                         </a>
                     </div>

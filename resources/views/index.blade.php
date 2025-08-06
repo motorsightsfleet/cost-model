@@ -17,8 +17,54 @@
             background-color: #f0f2f5;
             color: #333;
             line-height: 1.6;
-            padding: 20px;
+            padding: 0;
         }
+        
+        /* Navbar Styles */
+        .navbar {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px 30px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .navbar-brand {
+            color: #fff;
+            font-size: 24px;
+            font-weight: 600;
+            text-decoration: none;
+        }
+        
+        .navbar-brand i {
+            margin-right: 10px;
+        }
+        
+        .navbar-user {
+            display: flex;
+            align-items: center;
+            color: #fff;
+        }
+        
+        .navbar-user span {
+            margin-right: 15px;
+        }
+        
+        .navbar-user a {
+            color: #fff;
+            text-decoration: none;
+            padding: 8px 16px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-user a:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        
         .container {
             max-width: 1400px;
             margin: 0 auto;
@@ -27,6 +73,7 @@
             border-radius: 12px;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
             border: 1px solid #e0e0e0;
+            margin: 0 20px 20px 20px;
         }
         .tabs {
             display: flex;
@@ -366,6 +413,23 @@
     </style>
 </head>
 <body>
+    <!-- Navbar -->
+    <nav class="navbar">
+        <a href="{{ route('cost-model.index') }}" class="navbar-brand">
+            <i class="fas fa-calculator"></i> Cost Model Calculator
+        </a>
+        <div class="navbar-user">
+            <span>Selamat datang, {{ Auth::user()->name }}!</span>
+            <a href="{{ route('logout') }}" onclick="event.preventDefault(); document.getElementById('logout-form').submit();">
+                <i class="fas fa-sign-out-alt"></i> Logout
+            </a>
+        </div>
+    </nav>
+
+    <form id="logout-form" action="{{ route('logout') }}" method="POST" style="display: none;">
+        @csrf
+    </form>
+
     <div class="container">
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
             <h1>Cost Model Calculator</h1>

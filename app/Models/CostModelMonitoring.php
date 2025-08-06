@@ -18,12 +18,21 @@ class CostModelMonitoring extends Model
         'component',
         'value',
         'note',
+        'user_id',
     ];
 
     protected $casts = [
         'value' => 'decimal:2',
         'unit_police_number' => 'integer',
     ];
+
+    /**
+     * Relasi dengan User
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /**
      * Relasi dengan PoliceUnit melalui unit_police_number
@@ -39,6 +48,14 @@ class CostModelMonitoring extends Model
     public function getPoliceNumberAttribute()
     {
         return $this->policeUnit ? $this->policeUnit->police_number : null;
+    }
+
+    /**
+     * Scope untuk mencari berdasarkan user
+     */
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
     }
 
     /**

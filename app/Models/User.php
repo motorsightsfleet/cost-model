@@ -45,4 +45,44 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
+
+    /**
+     * Relasi dengan CostModelSetting
+     */
+    public function costModelSettings()
+    {
+        return $this->hasMany(CostModelSetting::class);
+    }
+
+    /**
+     * Relasi dengan CostModelExpense
+     */
+    public function costModelExpenses()
+    {
+        return $this->hasMany(CostModelExpense::class);
+    }
+
+    /**
+     * Relasi dengan CostModelCalculation
+     */
+    public function costModelCalculations()
+    {
+        return $this->hasMany(CostModelCalculation::class);
+    }
+
+    /**
+     * Relasi dengan CostModelMonitoring
+     */
+    public function costModelMonitorings()
+    {
+        return $this->hasMany(CostModelMonitoring::class);
+    }
+
+    /**
+     * Relasi dengan PoliceUnit
+     */
+    public function policeUnits()
+    {
+        return $this->hasMany(PoliceUnit::class);
+    }
 }

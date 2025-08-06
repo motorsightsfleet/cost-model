@@ -45,6 +45,7 @@ class CostModelExpense extends Model
         'driver_cost',
         'tyre_per_unit',
         'downtime_percentage',
+        'user_id',
     ];
 
     protected $casts = [
@@ -83,8 +84,18 @@ class CostModelExpense extends Model
         'downtime_percentage' => 'decimal:2',
     ];
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function calculations()
     {
         return $this->hasMany(CostModelCalculation::class);
+    }
+
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
     }
 }

@@ -39,6 +39,7 @@ class CostModelCalculation extends Model
         'downtime_cost_estimate',
         'yearly_breakdown',
         'dashboard_data',
+        'user_id',
     ];
 
     protected $casts = [
@@ -71,6 +72,11 @@ class CostModelCalculation extends Model
         'dashboard_data' => 'array',
     ];
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function setting()
     {
         return $this->belongsTo(CostModelSetting::class);
@@ -79,5 +85,10 @@ class CostModelCalculation extends Model
     public function expense()
     {
         return $this->belongsTo(CostModelExpense::class);
+    }
+
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
     }
 }

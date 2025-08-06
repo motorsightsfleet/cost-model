@@ -20,6 +20,7 @@ class CostModelSetting extends Model
         'fuel_consumption',
         'adblue_consumption',
         'day_operation',
+        'user_id',
     ];
 
     protected $casts = [
@@ -31,8 +32,18 @@ class CostModelSetting extends Model
         'adblue_consumption' => 'decimal:2',
     ];
 
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
     public function calculations()
     {
         return $this->hasMany(CostModelCalculation::class);
+    }
+
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
     }
 }

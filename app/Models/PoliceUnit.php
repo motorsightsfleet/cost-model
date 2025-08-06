@@ -15,6 +15,7 @@ class PoliceUnit extends Model
         'unit_type',
         'description',
         'is_active',
+        'user_id',
     ];
 
     protected $casts = [
@@ -22,11 +23,27 @@ class PoliceUnit extends Model
     ];
 
     /**
+     * Relasi dengan User
+     */
+    public function user()
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    /**
      * Relasi dengan CostModelMonitoring melalui unit_police_number
      */
     public function monitoringRecords()
     {
         return $this->hasMany(CostModelMonitoring::class, 'unit_police_number', 'id');
+    }
+
+    /**
+     * Scope untuk mencari berdasarkan user
+     */
+    public function scopeForUser($query, $userId)
+    {
+        return $query->where('user_id', $userId);
     }
 
     /**
