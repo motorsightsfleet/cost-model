@@ -772,33 +772,61 @@ function autoSaveInput(inputId, fieldType = 'form') {
                 const formData = costModelAPI.collectFormData();
                 await costModelAPI.upsertAllData(formData);
                 console.log(`Auto-saved form data for field: ${inputId}`);
-                showAutoSaveNotification('Data berhasil disimpan otomatis!', 'success');
+                // Notifikasi auto-save dihilangkan
             }
         } catch (error) {
             console.error(`Error auto-saving ${inputId}:`, error);
-            showAutoSaveNotification('Gagal menyimpan data otomatis: ' + error.message, 'error');
+            // Notifikasi error auto-save juga dihilangkan
         }
     }, 1000); // Delay 1 detik sebelum save
 }
 
-// Function untuk menampilkan notifikasi auto-save
+// Function untuk menampilkan notifikasi auto-save (disabled)
 function showAutoSaveNotification(message, type = 'success') {
+    // Notifikasi auto-save dihilangkan - hanya console log
+    console.log(`Auto-save notification (disabled): ${message} [${type}]`);
+}
+
+// Function untuk menampilkan notifikasi monitoring
+function showMonitoringNotification(message, type = 'success') {
     // Hapus notifikasi yang sudah ada
-    const existingNotification = document.getElementById('auto-save-notification');
+    const existingNotification = document.getElementById('monitoring-notification');
     if (existingNotification) {
         existingNotification.remove();
     }
 
     // Buat notifikasi baru
     const notification = document.createElement('div');
-    notification.id = 'auto-save-notification';
-    notification.className = type;
+    notification.id = 'monitoring-notification';
+    notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        z-index: 9999;
+        min-width: 300px;
+        padding: 15px 20px;
+        border-radius: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: white;
+        opacity: 0;
+        transform: translateX(100%);
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        background-color: ${type === 'success' ? '#28a745' : type === 'warning' ? '#ffc107' : '#dc3545'};
+    `;
     notification.textContent = message;
 
     // Tambahkan ke body
     document.body.appendChild(notification);
 
-    // Hapus notifikasi setelah 3 detik
+    // Animasi masuk
+    setTimeout(() => {
+        notification.style.opacity = '1';
+        notification.style.transform = 'translateX(0)';
+    }, 100);
+
+    // Hapus notifikasi setelah 4 detik
     setTimeout(() => {
         if (notification.parentNode) {
             notification.style.opacity = '0';
@@ -809,7 +837,7 @@ function showAutoSaveNotification(message, type = 'success') {
                 }
             }, 300);
         }
-    }, 3000);
+    }, 4000);
 }
 
 // Setup auto-save untuk semua input fields
@@ -1076,17 +1104,17 @@ async function submitAllMonitoringData() {
                 );
             }
             
-            showAutoSaveNotification(`Berhasil menyimpan ${monitoringData.length} data monitoring!`, 'success');
+            showMonitoringNotification(`Berhasil menyimpan ${monitoringData.length} data monitoring!`, 'success');
             
             // Data monitoring terakhir tidak lagi ditampilkan di UI
             // await loadAndDisplayLatestMonitoringData();
         } else {
-            showAutoSaveNotification('Tidak ada data monitoring untuk disimpan', 'warning');
+            showMonitoringNotification('Tidak ada data monitoring untuk disimpan', 'warning');
         }
         
     } catch (error) {
         console.error('Error submitting monitoring data:', error);
-        showAutoSaveNotification('Gagal menyimpan data monitoring: ' + error.message, 'error');
+        showMonitoringNotification('Gagal menyimpan data monitoring: ' + error.message, 'error');
     } finally {
         const submitButton = document.getElementById('monitoring-submit-btn');
         if (submitButton) {
@@ -1183,17 +1211,17 @@ async function submitAllExistingMonitoringData() {
                 );
             }
             
-            showAutoSaveNotification(`Berhasil menyimpan ${monitoringData.length} data existing monitoring!`, 'success');
+            showMonitoringNotification(`Berhasil menyimpan ${monitoringData.length} data existing monitoring!`, 'success');
             
             // Data monitoring terakhir tidak lagi ditampilkan di UI
             // await loadAndDisplayLatestMonitoringData();
         } else {
-            showAutoSaveNotification('Tidak ada data existing monitoring untuk disimpan', 'warning');
+            showMonitoringNotification('Tidak ada data existing monitoring untuk disimpan', 'warning');
         }
         
     } catch (error) {
         console.error('Error submitting existing monitoring data:', error);
-        showAutoSaveNotification('Gagal menyimpan data existing monitoring: ' + error.message, 'error');
+        showMonitoringNotification('Gagal menyimpan data existing monitoring: ' + error.message, 'error');
     } finally {
         const submitButton = document.getElementById('existing-monitoring-submit-btn');
         if (submitButton) {

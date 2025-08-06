@@ -2037,11 +2037,11 @@
                 if (result.success) {
                     displayPoliceUnitsInModal(result.data);
                 } else {
-                    showAlert('Error: ' + result.message, 'danger');
+                    console.error('Error loading police units:', result.message);
                 }
             } catch (error) {
                 console.error('Error loading police units:', error);
-                showAlert('Terjadi kesalahan saat memuat data', 'danger');
+                // Notifikasi error loading juga dihilangkan
             }
         }
 
@@ -2109,17 +2109,18 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    showAlert(result.message, 'success');
+                    // Notifikasi sukses dihilangkan untuk police units
+                    console.log('Police unit saved:', result.message);
                     resetPoliceUnitForm();
                     loadPoliceUnitsForModal();
                     // Reload dropdown data
                     await loadPoliceUnitsForDropdown();
                 } else {
-                    showAlert('Error: ' + result.message, 'danger');
+                    console.error('Error saving police unit:', result.message);
                 }
             } catch (error) {
                 console.error('Error saving police unit:', error);
-                showAlert('Terjadi kesalahan saat menyimpan data', 'danger');
+                // Notifikasi error juga dihilangkan untuk police units
             }
         }
 
@@ -2141,7 +2142,7 @@
                 }
             } catch (error) {
                 console.error('Error loading police unit for edit:', error);
-                showAlert('Terjadi kesalahan saat memuat data untuk edit', 'danger');
+                // Notifikasi error edit juga dihilangkan
             }
         }
 
@@ -2169,16 +2170,17 @@
                 const result = await response.json();
                 
                 if (result.success) {
-                    showAlert(result.message, 'success');
+                    // Notifikasi sukses dihilangkan untuk delete police units
+                    console.log('Police unit deleted:', result.message);
                     loadPoliceUnitsForModal();
                     // Reload dropdown data
                     await loadPoliceUnitsForDropdown();
                 } else {
-                    showAlert('Error: ' + result.message, 'danger');
+                    console.error('Error deleting police unit:', result.message);
                 }
             } catch (error) {
                 console.error('Error deleting police unit:', error);
-                showAlert('Terjadi kesalahan saat menghapus data', 'danger');
+                // Notifikasi error juga dihilangkan untuk delete police units
             } finally {
                 closeDeleteModal();
             }
