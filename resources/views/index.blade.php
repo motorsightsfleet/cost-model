@@ -321,6 +321,20 @@
             background-color: #d1e7ff;
             font-weight: 600;
         }
+        .monitoring-table .total-column {
+            background-color: #e8f4fd;
+            font-weight: 600;
+        }
+        .monitoring-table .grand-total-cell {
+            background-color: #007bff;
+            color: #fff;
+            font-weight: 700;
+        }
+        .monitoring-table th.total-column {
+            background-color: #0056b3;
+            color: #fff;
+            font-weight: 700;
+        }
         
         /* Auto-save notification styles */
         #auto-save-notification {
@@ -1222,6 +1236,7 @@
                     <tr>
                         <th>Component</th>
                         ${weeks.map(w => `<th>${w}</th>`).join('')}
+                        <th class="total-column">Total</th>
                     </tr>
                 `;
                 tableHead.innerHTML = headerHTML;
@@ -1245,6 +1260,9 @@
                         `;
                     }
                 });
+                // Add total column for each component
+                const componentTotalId = `component_total_${component.label.replace(/ /g, '_').replace(/\(|\)/g, '')}_${year}`;
+                tableHTML += `<td id="${componentTotalId}" class="total-column">0.00</td>`;
                 tableHTML += '</tr>';
                 component.sub.forEach(sub => {
                     tableHTML += '<tr>';
@@ -1257,6 +1275,9 @@
                             </td>
                         `;
                     });
+                    // Add total column for subcategory
+                    const subTotalId = `sub_total_${component.label.replace(/ /g, '_').replace(/\(|\)/g, '')}_${sub.replace(/ /g, '_')}_${year}`;
+                    tableHTML += `<td id="${subTotalId}" class="total-column">0.00</td>`;
                     tableHTML += '</tr>';
                 });
             });
@@ -1267,6 +1288,9 @@
                 const totalId = `total_${year}_${week}`;
                 tableHTML += `<td id="${totalId}">0.00</td>`;
             });
+            // Add grand total cell
+            const grandTotalId = `grand_total_${year}`;
+            tableHTML += `<td id="${grandTotalId}" class="grand-total-cell">0.00</td>`;
             tableHTML += '</tr>';
 
             const tableBody = document.getElementById('monitoring-table-body');
@@ -1281,6 +1305,10 @@
             const components = ['Service_Berkala/PM', 'Service_General/GM', 'BBM', 'AdBlue', 'Driver_Cost', 'Ban', 'Downtime_1%'];
             const downtimePercentage = parseFloat(document.getElementById('downtime')?.value || '0'); // Ambil dari Expense tab
 
+            // Object untuk menyimpan total per komponen
+            const componentTotals = {};
+            let grandTotal = 0;
+
             weeks.forEach(week => {
                 let totalComponents = 0;
                 components.forEach(component => {
@@ -1290,6 +1318,12 @@
                         if (input) {
                             const value = parseFormattedNumber(input.value || '0');
                             totalComponents += value;
+                            
+                            // Akumulasi total per komponen
+                            if (!componentTotals[component]) {
+                                componentTotals[component] = 0;
+                            }
+                            componentTotals[component] += value;
                         }
                     }
                 });
@@ -1302,14 +1336,38 @@
                     downtimeCell.textContent = formatNumberWithSeparator(downtimeValue);
                 }
 
-                // Hitung Total
+                // Akumulasi total downtime per komponen
+                if (!componentTotals['Downtime_1%']) {
+                    componentTotals['Downtime_1%'] = 0;
+                }
+                componentTotals['Downtime_1%'] += downtimeValue;
+
+                // Hitung Total per minggu
                 let total = totalComponents + downtimeValue;
                 const totalId = `total_${year}_${week}`;
                 const totalCell = document.getElementById(totalId);
                 if (totalCell) {
                     totalCell.textContent = formatNumberWithSeparator(total);
                 }
+                
+                grandTotal += total;
             });
+
+            // Update total per komponen
+            components.forEach(component => {
+                const componentTotalId = `component_total_${component}_${year}`;
+                const componentTotalCell = document.getElementById(componentTotalId);
+                if (componentTotalCell) {
+                    componentTotalCell.textContent = formatNumberWithSeparator(componentTotals[component] || 0);
+                }
+            });
+
+            // Update grand total
+            const grandTotalId = `grand_total_${year}`;
+            const grandTotalCell = document.getElementById(grandTotalId);
+            if (grandTotalCell) {
+                grandTotalCell.textContent = formatNumberWithSeparator(grandTotal);
+            }
         }
 
         function updateMonitoringYears() {
@@ -1347,6 +1405,7 @@
                     <tr>
                         <th>Component</th>
                         ${weeks.map(w => `<th>${w}</th>`).join('')}
+                        <th class="total-column">Total</th>
                     </tr>
                 `;
                 tableHead.innerHTML = headerHTML;
@@ -1370,6 +1429,9 @@
                         `;
                     }
                 });
+                // Add total column for each component
+                const componentTotalId = `component_total_${component.label.replace(/ /g, '_').replace(/\(|\)/g, '')}_existing_${year}`;
+                tableHTML += `<td id="${componentTotalId}" class="total-column">0.00</td>`;
                 tableHTML += '</tr>';
                 component.sub.forEach(sub => {
                     tableHTML += '<tr>';
@@ -1382,6 +1444,9 @@
                             </td>
                         `;
                     });
+                    // Add total column for subcategory
+                    const subTotalId = `sub_total_${component.label.replace(/ /g, '_').replace(/\(|\)/g, '')}_${sub.replace(/ /g, '_')}_existing_${year}`;
+                    tableHTML += `<td id="${subTotalId}" class="total-column">0.00</td>`;
                     tableHTML += '</tr>';
                 });
             });
@@ -1392,6 +1457,9 @@
                 const totalId = `total_existing_${year}_${week}`;
                 tableHTML += `<td id="${totalId}">0.00</td>`;
             });
+            // Add grand total cell
+            const grandTotalId = `grand_total_existing_${year}`;
+            tableHTML += `<td id="${grandTotalId}" class="grand-total-cell">0.00</td>`;
             tableHTML += '</tr>';
 
             const tableBody = document.getElementById('existing-monitoring-table-body');
@@ -1406,6 +1474,10 @@
             const components = ['Service_Berkala/PM', 'Service_General/GM', 'BBM', 'AdBlue', 'Driver_Cost', 'Ban', 'Downtime_1%'];
             const downtimePercentage = parseFloat(document.getElementById('downtime')?.value || '0'); // Ambil dari Expense tab
 
+            // Object untuk menyimpan total per komponen
+            const componentTotals = {};
+            let grandTotal = 0;
+
             weeks.forEach(week => {
                 let totalComponents = 0;
                 components.forEach(component => {
@@ -1415,6 +1487,12 @@
                         if (input) {
                             const value = parseFormattedNumber(input.value || '0');
                             totalComponents += value;
+                            
+                            // Akumulasi total per komponen
+                            if (!componentTotals[component]) {
+                                componentTotals[component] = 0;
+                            }
+                            componentTotals[component] += value;
                         }
                     }
                 });
@@ -1427,14 +1505,38 @@
                     downtimeCell.textContent = formatNumberWithSeparator(downtimeValue);
                 }
 
-                // Hitung Total
+                // Akumulasi total downtime per komponen
+                if (!componentTotals['Downtime_1%']) {
+                    componentTotals['Downtime_1%'] = 0;
+                }
+                componentTotals['Downtime_1%'] += downtimeValue;
+
+                // Hitung Total per minggu
                 let total = totalComponents + downtimeValue;
                 const totalId = `total_existing_${year}_${week}`;
                 const totalCell = document.getElementById(totalId);
                 if (totalCell) {
                     totalCell.textContent = formatNumberWithSeparator(total);
                 }
+                
+                grandTotal += total;
             });
+
+            // Update total per komponen
+            components.forEach(component => {
+                const componentTotalId = `component_total_${component}_existing_${year}`;
+                const componentTotalCell = document.getElementById(componentTotalId);
+                if (componentTotalCell) {
+                    componentTotalCell.textContent = formatNumberWithSeparator(componentTotals[component] || 0);
+                }
+            });
+
+            // Update grand total
+            const grandTotalId = `grand_total_existing_${year}`;
+            const grandTotalCell = document.getElementById(grandTotalId);
+            if (grandTotalCell) {
+                grandTotalCell.textContent = formatNumberWithSeparator(grandTotal);
+            }
         }
 
         function updateExistingMonitoringYears() {
