@@ -335,6 +335,16 @@
             color: #fff;
             font-weight: 700;
         }
+        .monitoring-table .total-assumptions-row {
+            background-color: #fff3cd;
+            font-weight: 600;
+            color: #856404;
+        }
+        .monitoring-table .assumption-cell {
+            background-color: #fff3cd;
+            font-weight: 600;
+            color: #856404;
+        }
         
         /* Auto-save notification styles */
         #auto-save-notification {
@@ -1283,7 +1293,7 @@
             });
 
             // Add total row for each week
-            tableHTML += '<tr class="total-row"><td>Total</td>';
+            tableHTML += '<tr class="total-row"><td>Total (Monitoring)</td>';
             weeks.forEach(week => {
                 const totalId = `total_${year}_${week}`;
                 tableHTML += `<td id="${totalId}">0.00</td>`;
@@ -1293,10 +1303,22 @@
             tableHTML += `<td id="${grandTotalId}" class="grand-total-cell">0.00</td>`;
             tableHTML += '</tr>';
 
+            // Add Total Assumptions row
+            tableHTML += '<tr class="total-assumptions-row"><td>Total (Assumptions)</td>';
+            weeks.forEach(week => {
+                const assumptionId = `total_assumptions_${year}_${week}`;
+                tableHTML += `<td id="${assumptionId}" class="assumption-cell">0.00</td>`;
+            });
+            // Add total column for Total Assumptions
+            const assumptionTotalId = `total_assumptions_total_${year}`;
+            tableHTML += `<td id="${assumptionTotalId}" class="total-column">0.00</td>`;
+            tableHTML += '</tr>';
+
             const tableBody = document.getElementById('monitoring-table-body');
             if (tableBody) {
                 tableBody.innerHTML = tableHTML;
                 updateMonitoringTotals(year); // Initialize totals
+                updateTotalAssumptions(year); // Initialize Total Assumptions
             }
         }
 
@@ -1367,6 +1389,42 @@
             const grandTotalCell = document.getElementById(grandTotalId);
             if (grandTotalCell) {
                 grandTotalCell.textContent = formatNumberWithSeparator(grandTotal);
+            }
+        }
+
+        // Function to update Total Assumptions from dashboard data
+        async function updateTotalAssumptions(year) {
+            try {
+                if (typeof costModelAPI !== 'undefined') {
+                    const dashboardData = await costModelAPI.getDashboardData();
+                    if (dashboardData && dashboardData.dashboard_data && dashboardData.dashboard_data.assumption_totals) {
+                        const assumptionTotal = dashboardData.dashboard_data.assumption_totals[year - 1] || 0;
+                        const weeklyAssumption = assumptionTotal / 52; // Divide by 52 weeks
+                        
+                        // Update all weeks with the same value
+                        const weeks = Array.from({ length: 52 }, (_, i) => `W${i + 1}`);
+                        weeks.forEach(week => {
+                            const assumptionId = `total_assumptions_${year}_${week}`;
+                            const assumptionCell = document.getElementById(assumptionId);
+                            if (assumptionCell) {
+                                assumptionCell.textContent = formatNumberWithSeparator(weeklyAssumption);
+                            }
+                        });
+                        
+                        // Update total column for Total Assumptions
+                        const assumptionTotalId = `total_assumptions_total_${year}`;
+                        const assumptionTotalCell = document.getElementById(assumptionTotalId);
+                        if (assumptionTotalCell) {
+                            assumptionTotalCell.textContent = formatNumberWithSeparator(assumptionTotal);
+                        }
+                        
+                        console.log(`Total Assumptions updated for year ${year}: ${assumptionTotal} (weekly: ${weeklyAssumption})`);
+                    } else {
+                        console.log('No dashboard data available for Total Assumptions');
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating Total Assumptions:', error);
             }
         }
 
@@ -1452,7 +1510,7 @@
             });
 
             // Add total row for each week
-            tableHTML += '<tr class="total-row"><td>Total</td>';
+            tableHTML += '<tr class="total-row"><td>Total (Monitoring)</td>';
             weeks.forEach(week => {
                 const totalId = `total_existing_${year}_${week}`;
                 tableHTML += `<td id="${totalId}">0.00</td>`;
@@ -1462,10 +1520,22 @@
             tableHTML += `<td id="${grandTotalId}" class="grand-total-cell">0.00</td>`;
             tableHTML += '</tr>';
 
+            // Add Total Assumptions row
+            tableHTML += '<tr class="total-assumptions-row"><td>Total (Assumptions)</td>';
+            weeks.forEach(week => {
+                const assumptionId = `total_assumptions_existing_${year}_${week}`;
+                tableHTML += `<td id="${assumptionId}" class="assumption-cell">0.00</td>`;
+            });
+            // Add total column for Total Assumptions
+            const assumptionTotalId = `total_assumptions_total_existing_${year}`;
+            tableHTML += `<td id="${assumptionTotalId}" class="total-column">0.00</td>`;
+            tableHTML += '</tr>';
+
             const tableBody = document.getElementById('existing-monitoring-table-body');
             if (tableBody) {
                 tableBody.innerHTML = tableHTML;
                 updateExistingMonitoringTotals(year); // Initialize totals
+                updateExistingTotalAssumptions(year); // Initialize Total Assumptions
             }
         }
 
@@ -1536,6 +1606,42 @@
             const grandTotalCell = document.getElementById(grandTotalId);
             if (grandTotalCell) {
                 grandTotalCell.textContent = formatNumberWithSeparator(grandTotal);
+            }
+        }
+
+        // Function to update Total Assumptions for existing monitoring
+        async function updateExistingTotalAssumptions(year) {
+            try {
+                if (typeof costModelAPI !== 'undefined') {
+                    const dashboardData = await costModelAPI.getDashboardData();
+                    if (dashboardData && dashboardData.dashboard_data && dashboardData.dashboard_data.assumption_totals) {
+                        const assumptionTotal = dashboardData.dashboard_data.assumption_totals[year - 1] || 0;
+                        const weeklyAssumption = assumptionTotal / 52; // Divide by 52 weeks
+                        
+                        // Update all weeks with the same value
+                        const weeks = Array.from({ length: 52 }, (_, i) => `W${i + 1}`);
+                        weeks.forEach(week => {
+                            const assumptionId = `total_assumptions_existing_${year}_${week}`;
+                            const assumptionCell = document.getElementById(assumptionId);
+                            if (assumptionCell) {
+                                assumptionCell.textContent = formatNumberWithSeparator(weeklyAssumption);
+                            }
+                        });
+                        
+                        // Update total column for Total Assumptions
+                        const assumptionTotalId = `total_assumptions_total_existing_${year}`;
+                        const assumptionTotalCell = document.getElementById(assumptionTotalId);
+                        if (assumptionTotalCell) {
+                            assumptionTotalCell.textContent = formatNumberWithSeparator(assumptionTotal);
+                        }
+                        
+                        console.log(`Existing Total Assumptions updated for year ${year}: ${assumptionTotal} (weekly: ${weeklyAssumption})`);
+                    } else {
+                        console.log('No dashboard data available for Existing Total Assumptions');
+                    }
+                }
+            } catch (error) {
+                console.error('Error updating Existing Total Assumptions:', error);
             }
         }
 
@@ -1704,11 +1810,12 @@
                             await costModelAPI.loadMonitoringData(year, unitPoliceNumber);
                             console.log('Monitoring data loaded successfully');
                             
-                            // Update monitoring totals after data is loaded
-                            setTimeout(() => {
-                                updateMonitoringTotals(year);
-                                console.log('Monitoring totals updated after tab load');
-                            }, 200);
+                                                // Update monitoring totals after data is loaded
+                    setTimeout(() => {
+                        updateMonitoringTotals(year);
+                        updateTotalAssumptions(year);
+                        console.log('Monitoring totals and Total Assumptions updated after tab load');
+                    }, 200);
                         }
                     } catch (error) {
                         console.error('Error loading monitoring data:', error);
@@ -1727,7 +1834,8 @@
                             // Update existing monitoring totals after data is loaded
                             setTimeout(() => {
                                 updateExistingMonitoringTotals(year);
-                                console.log('Existing monitoring totals updated after tab load');
+                                updateExistingTotalAssumptions(year);
+                                console.log('Existing monitoring totals and Total Assumptions updated after tab load');
                             }, 200);
                         }
                     } catch (error) {
@@ -1897,7 +2005,8 @@
                     // Update monitoring totals after data is loaded
                     setTimeout(() => {
                         updateMonitoringTotals(year);
-                        console.log(`Monitoring totals updated for year ${year}`);
+                        updateTotalAssumptions(year);
+                        console.log(`Monitoring totals and Total Assumptions updated for year ${year}`);
                     }, 200);
                 }
             } catch (error) {
@@ -1959,7 +2068,8 @@
                     // Update monitoring totals after data is loaded
                     setTimeout(() => {
                         updateMonitoringTotals(year);
-                        console.log(`Monitoring totals updated for year ${year}`);
+                        updateTotalAssumptions(year);
+                        console.log(`Monitoring totals and Total Assumptions updated for year ${year}`);
                     }, 200);
                 } else {
                     // Clear monitoring table if no unit selected
@@ -1987,7 +2097,8 @@
                     // Update existing monitoring totals after data is loaded
                     setTimeout(() => {
                         updateExistingMonitoringTotals(year);
-                        console.log(`Existing monitoring totals updated for year ${year}`);
+                        updateExistingTotalAssumptions(year);
+                        console.log(`Existing monitoring totals and Total Assumptions updated for year ${year}`);
                     }, 200);
                 } else {
                     // Clear existing monitoring table if no unit selected
@@ -2030,7 +2141,8 @@
                     // Update existing monitoring totals after data is loaded
                     setTimeout(() => {
                         updateExistingMonitoringTotals(year);
-                        console.log(`Existing monitoring totals updated for year ${year}`);
+                        updateExistingTotalAssumptions(year);
+                        console.log(`Existing monitoring totals and Total Assumptions updated for year ${year}`);
                     }, 200);
                 }
             } catch (error) {
