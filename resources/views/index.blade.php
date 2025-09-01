@@ -345,6 +345,10 @@
             font-weight: 600;
             color: #856404;
         }
+        .dashboard-assumption-value {
+            font-weight: 600;
+            color: #856404;
+        }
         
         /* Auto-save notification styles */
         #auto-save-notification {
@@ -737,6 +741,19 @@
                     <tbody id="dashboard-table-body"></tbody>
                 </table>
             </div>
+            <div class="form-group" style="margin-top: 20px;">
+                <div style="background: #f8f9fa; border: 1px solid #dee2e6; border-radius: 8px; padding: 15px;">
+                    <h4 style="margin: 0 0 10px 0; color: #333;">
+                        <i class="fas fa-info-circle"></i> Informasi Total Assumptions
+                    </h4>
+                    <p style="margin: 0; color: #666; font-size: 14px;">
+                        Nilai "Total Assumptions" di atas dapat digunakan di halaman Monitoring. 
+                        Setiap nilai memiliki ID: <code>dashboard_total_assumptions_[tahun]</code> 
+                        (contoh: <code>dashboard_total_assumptions_1</code> untuk tahun pertama).
+                    </p>
+                    <div id="dashboardAssumptionsInfo" style="margin-top: 10px; font-size: 14px;"></div>
+                </div>
+            </div>
         </div>
         <div id="monitoring" class="tab-content">
             <h2>Monitoring</h2>
@@ -752,6 +769,12 @@
                     {{-- <option value="">Pilih Nomor Polisi Unit</option> --}}
                     <!-- Options will be dynamically populated -->
                 </select>
+            </div>
+            <div class="form-group">
+                <button type="button" onclick="loadTotalAssumptionsFromDashboard()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                    <i class="fas fa-sync-alt"></i> Load Total Assumptions dari Dashboard
+                </button>
+                <span id="assumptionsInfo" style="color: #666; font-size: 14px;"></span>
             </div>
             <div class="monitoring-table-container">
                 <table class="monitoring-table" id="monitoring-table">
@@ -774,6 +797,12 @@
                     {{-- <option value="">Pilih Nomor Polisi Unit</option> --}}
                     <!-- Options will be dynamically populated -->
                 </select>
+            </div>
+            <div class="form-group">
+                <button type="button" onclick="loadTotalAssumptionsFromDashboardForExisting()" style="background: #28a745; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; margin-right: 10px;">
+                    <i class="fas fa-sync-alt"></i> Load Total Assumptions dari Dashboard
+                </button>
+                <span id="existingAssumptionsInfo" style="color: #666; font-size: 14px;"></span>
             </div>
             <div class="monitoring-table-container">
                 <table class="monitoring-table" id="existing-monitoring-table">
@@ -1186,7 +1215,8 @@
             } else if (currentCategory === 'Assumption' && assumptionTotals.some(t => t > 0)) {
                 tableHTML += '<tr class="total-row"><td>Total Assumptions</td><td></td>';
                 for (let i = 0; i < 10; i++) {
-                    tableHTML += `<td ${i >= yearsToDisplay ? 'style="display:none"' : ''}>${formatNumberWithSeparator(assumptionTotals[i])}</td>`;
+                    const assumptionId = `dashboard_total_assumptions_${i + 1}`;
+                    tableHTML += `<td id="${assumptionId}" class="dashboard-assumption-value" ${i >= yearsToDisplay ? 'style="display:none"' : ''}>${formatNumberWithSeparator(assumptionTotals[i])}</td>`;
                     yearlyTotals[i] += assumptionTotals[i];
                 }
                 tableHTML += '</tr>';
@@ -1222,6 +1252,9 @@
 
             // Save dashboard data to database
             saveDashboardDataToDatabase(rows, yearlyTotals, actualTotals, assumptionTotals);
+
+            // Update dashboard assumptions info
+            updateDashboardAssumptionsInfo(assumptionTotals, yearsToDisplay);
 
             updateMonitoringTable();
             updateExistingMonitoringTable();
@@ -1319,6 +1352,15 @@
                 tableBody.innerHTML = tableHTML;
                 updateMonitoringTotals(year); // Initialize totals
                 updateTotalAssumptions(year); // Initialize Total Assumptions
+                
+                // Auto-load Total Assumptions from dashboard if available
+                setTimeout(() => {
+                    const assumptionTotal = getDashboardTotalAssumptions(year);
+                    if (assumptionTotal > 0) {
+                        displayTotalAssumptionsInMonitoring(year);
+                        console.log(`Auto-loaded Total Assumptions for year ${year}: ${assumptionTotal}`);
+                    }
+                }, 100);
             }
         }
 
@@ -1395,6 +1437,34 @@
         // Function to update Total Assumptions from dashboard data
         async function updateTotalAssumptions(year) {
             try {
+                // First try to get from dashboard elements directly
+                const dashboardAssumptionElement = document.getElementById(`dashboard_total_assumptions_${year}`);
+                if (dashboardAssumptionElement) {
+                    const assumptionTotal = parseFormattedNumber(dashboardAssumptionElement.textContent || '0');
+                    const weeklyAssumption = assumptionTotal / 52; // Divide by 52 weeks
+                    
+                    // Update all weeks with the same value
+                    const weeks = Array.from({ length: 52 }, (_, i) => `W${i + 1}`);
+                    weeks.forEach(week => {
+                        const assumptionId = `total_assumptions_${year}_${week}`;
+                        const assumptionCell = document.getElementById(assumptionId);
+                        if (assumptionCell) {
+                            assumptionCell.textContent = formatNumberWithSeparator(weeklyAssumption);
+                        }
+                    });
+                    
+                    // Update total column for Total Assumptions
+                    const assumptionTotalId = `total_assumptions_total_${year}`;
+                    const assumptionTotalCell = document.getElementById(assumptionTotalId);
+                    if (assumptionTotalCell) {
+                        assumptionTotalCell.textContent = formatNumberWithSeparator(assumptionTotal);
+                    }
+                    
+                    console.log(`Total Assumptions updated for year ${year} from dashboard: ${assumptionTotal} (weekly: ${weeklyAssumption})`);
+                    return;
+                }
+                
+                // Fallback to API if dashboard element not found
                 if (typeof costModelAPI !== 'undefined') {
                     const dashboardData = await costModelAPI.getDashboardData();
                     if (dashboardData && dashboardData.dashboard_data && dashboardData.dashboard_data.assumption_totals) {
@@ -1418,13 +1488,146 @@
                             assumptionTotalCell.textContent = formatNumberWithSeparator(assumptionTotal);
                         }
                         
-                        console.log(`Total Assumptions updated for year ${year}: ${assumptionTotal} (weekly: ${weeklyAssumption})`);
+                        console.log(`Total Assumptions updated for year ${year} from API: ${assumptionTotal} (weekly: ${weeklyAssumption})`);
                     } else {
                         console.log('No dashboard data available for Total Assumptions');
                     }
                 }
             } catch (error) {
                 console.error('Error updating Total Assumptions:', error);
+            }
+        }
+
+        // Function to update dashboard assumptions info display
+        function updateDashboardAssumptionsInfo(assumptionTotals, yearsToDisplay) {
+            const infoElement = document.getElementById('dashboardAssumptionsInfo');
+            if (infoElement) {
+                let infoHTML = '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;">';
+                
+                for (let i = 0; i < yearsToDisplay; i++) {
+                    const year = i + 1;
+                    const value = assumptionTotals[i] || 0;
+                    const suffix = year === 1 ? 'st' : (year === 2 ? 'nd' : (year === 3 ? 'rd' : 'th'));
+                    
+                    infoHTML += `
+                        <div style="background: white; border: 1px solid #dee2e6; border-radius: 4px; padding: 10px;">
+                            <strong>Tahun ${year}${suffix}:</strong><br>
+                            <span style="color: #856404; font-weight: 600;">${formatNumberWithSeparator(value)}</span><br>
+                            <small style="color: #666;">ID: dashboard_total_assumptions_${year}</small>
+                        </div>
+                    `;
+                }
+                
+                infoHTML += '</div>';
+                infoElement.innerHTML = infoHTML;
+            }
+        }
+
+        // Function to get Total Assumptions value from dashboard for specific year
+        function getDashboardTotalAssumptions(year) {
+            const dashboardElement = document.getElementById(`dashboard_total_assumptions_${year}`);
+            if (dashboardElement) {
+                return parseFormattedNumber(dashboardElement.textContent || '0');
+            }
+            return 0;
+        }
+
+        // Function to display Total Assumptions value in monitoring
+        function displayTotalAssumptionsInMonitoring(year) {
+            const assumptionTotal = getDashboardTotalAssumptions(year);
+            const weeklyAssumption = assumptionTotal / 52;
+            
+            // Update all weeks with the same value
+            const weeks = Array.from({ length: 52 }, (_, i) => `W${i + 1}`);
+            weeks.forEach(week => {
+                const assumptionId = `total_assumptions_${year}_${week}`;
+                const assumptionCell = document.getElementById(assumptionId);
+                if (assumptionCell) {
+                    assumptionCell.textContent = formatNumberWithSeparator(weeklyAssumption);
+                }
+            });
+            
+            // Update total column for Total Assumptions
+            const assumptionTotalId = `total_assumptions_total_${year}`;
+            const assumptionTotalCell = document.getElementById(assumptionTotalId);
+            if (assumptionTotalCell) {
+                assumptionTotalCell.textContent = formatNumberWithSeparator(assumptionTotal);
+            }
+            
+            console.log(`Total Assumptions displayed for year ${year}: ${assumptionTotal} (weekly: ${weeklyAssumption})`);
+        }
+
+        // Function to load Total Assumptions from dashboard and display in monitoring
+        function loadTotalAssumptionsFromDashboard() {
+            const year = parseInt(document.getElementById('yearToMonitor')?.value || '1');
+            const assumptionTotal = getDashboardTotalAssumptions(year);
+            
+            if (assumptionTotal > 0) {
+                displayTotalAssumptionsInMonitoring(year);
+                
+                // Update info display
+                const infoElement = document.getElementById('assumptionsInfo');
+                if (infoElement) {
+                    const weeklyAssumption = assumptionTotal / 52;
+                    infoElement.textContent = `Total Assumptions untuk Tahun ${year}: ${formatNumberWithSeparator(assumptionTotal)} (Mingguan: ${formatNumberWithSeparator(weeklyAssumption)})`;
+                    infoElement.style.color = '#28a745';
+                }
+                
+                console.log(`Total Assumptions loaded from dashboard for year ${year}: ${assumptionTotal}`);
+            } else {
+                // Update info display for no data
+                const infoElement = document.getElementById('assumptionsInfo');
+                if (infoElement) {
+                    infoElement.textContent = `Tidak ada data Total Assumptions untuk Tahun ${year} di Dashboard`;
+                    infoElement.style.color = '#dc3545';
+                }
+                
+                console.log(`No Total Assumptions data found for year ${year} in dashboard`);
+            }
+        }
+
+        // Function to load Total Assumptions from dashboard for existing monitoring
+        function loadTotalAssumptionsFromDashboardForExisting() {
+            const year = parseInt(document.getElementById('existingYearToMonitor')?.value || '1');
+            const assumptionTotal = getDashboardTotalAssumptions(year);
+            
+            if (assumptionTotal > 0) {
+                // Update existing monitoring table with assumptions data
+                const weeklyAssumption = assumptionTotal / 52;
+                const weeks = Array.from({ length: 52 }, (_, i) => `W${i + 1}`);
+                
+                weeks.forEach(week => {
+                    const assumptionId = `total_assumptions_existing_${year}_${week}`;
+                    const assumptionCell = document.getElementById(assumptionId);
+                    if (assumptionCell) {
+                        assumptionCell.textContent = formatNumberWithSeparator(weeklyAssumption);
+                    }
+                });
+                
+                // Update total column for Total Assumptions
+                const assumptionTotalId = `total_assumptions_total_existing_${year}`;
+                const assumptionTotalCell = document.getElementById(assumptionTotalId);
+                if (assumptionTotalCell) {
+                    assumptionTotalCell.textContent = formatNumberWithSeparator(assumptionTotal);
+                }
+                
+                // Update info display
+                const infoElement = document.getElementById('existingAssumptionsInfo');
+                if (infoElement) {
+                    infoElement.textContent = `Total Assumptions untuk Tahun ${year}: ${formatNumberWithSeparator(assumptionTotal)} (Mingguan: ${formatNumberWithSeparator(weeklyAssumption)})`;
+                    infoElement.style.color = '#28a745';
+                }
+                
+                console.log(`Total Assumptions loaded from dashboard for existing monitoring year ${year}: ${assumptionTotal}`);
+            } else {
+                // Update info display for no data
+                const infoElement = document.getElementById('existingAssumptionsInfo');
+                if (infoElement) {
+                    infoElement.textContent = `Tidak ada data Total Assumptions untuk Tahun ${year} di Dashboard`;
+                    infoElement.style.color = '#dc3545';
+                }
+                
+                console.log(`No Total Assumptions data found for year ${year} in dashboard for existing monitoring`);
             }
         }
 
@@ -1536,6 +1739,33 @@
                 tableBody.innerHTML = tableHTML;
                 updateExistingMonitoringTotals(year); // Initialize totals
                 updateExistingTotalAssumptions(year); // Initialize Total Assumptions
+                
+                // Auto-load Total Assumptions from dashboard if available
+                setTimeout(() => {
+                    const assumptionTotal = getDashboardTotalAssumptions(year);
+                    if (assumptionTotal > 0) {
+                        // Update existing monitoring table with assumptions data
+                        const weeklyAssumption = assumptionTotal / 52;
+                        const weeks = Array.from({ length: 52 }, (_, i) => `W${i + 1}`);
+                        
+                        weeks.forEach(week => {
+                            const assumptionId = `total_assumptions_existing_${year}_${week}`;
+                            const assumptionCell = document.getElementById(assumptionId);
+                            if (assumptionCell) {
+                                assumptionCell.textContent = formatNumberWithSeparator(weeklyAssumption);
+                            }
+                        });
+                        
+                        // Update total column for Total Assumptions
+                        const assumptionTotalId = `total_assumptions_total_existing_${year}`;
+                        const assumptionTotalCell = document.getElementById(assumptionTotalId);
+                        if (assumptionTotalCell) {
+                            assumptionTotalCell.textContent = formatNumberWithSeparator(assumptionTotal);
+                        }
+                        
+                        console.log(`Auto-loaded Total Assumptions for existing monitoring year ${year}: ${assumptionTotal}`);
+                    }
+                }, 100);
             }
         }
 
